@@ -1,0 +1,95 @@
+BAAL — Pre-Expansion Priority Assessment
+==========================================
+Generated 2026-03-03
+
+What's Strong (Leave Alone)
+---------------------------
+- God system — The standout feature. 8 distinct gods, meaningful gifts, apostasy
+  consequences. DCSS-quality design.
+- Monster variety — 63 monsters with real mechanical differences (mimics,
+  doppelgangers, faction neutrality, confusion auras). Solid.
+- Core loop — Movement, combat, permadeath, ghost system, the Rune escape
+  mechanic. All feel good.
+- UI — Side panel, log, modals, look mode, minimap. Clean and functional.
+
+
+What Needs Work Before New Content
+----------------------------------
+
+1. ITEMS ARE TOO LINEAR
+   Every weapon/armor slot is just "find bigger number." No interesting
+   trade-offs — no light weapon that attacks twice, no heavy armor that slows
+   you, no cursed sword with a powerful upside. Before adding new classes/races
+   that need distinct gear, the item system needs depth.
+   Ideas:
+   - Unique/named items (Sword of Kas, Staff of the Magi-type things)
+   - Weapon properties beyond raw damage (reach, speed, lifesteal, elemental)
+   - Meaningful cursed items (powerful but with a cost, not just "gotcha" traps)
+
+2. SPELLS LACK TACTICAL DEPTH
+   Magic-User has 8 spells but they're basically "small damage, medium damage,
+   big damage, huge damage." Cleric has 5, mostly healing. Before adding a 4th
+   class, the spell system needs more variety — buffs, debuffs, terrain
+   manipulation, utility spells (knock, detect monsters, create light). Right
+   now there's no reason to cast Magic Missile when you have a Fire Wand.
+
+3. DUNGEON FLOORS ALL FEEL THE SAME
+   Every floor is the same BSP rectangle soup. Before adding sub-levels/branches,
+   the base dungeon needs more variety:
+   - Themed floor aesthetics (crypt floors, flooded caves, lava forge)
+   - Special room types (treasure vaults, libraries, armories)
+   - Floor-specific mechanics (darkness floors where FOV is halved, flooded
+     floors with water movement penalties)
+   - Pre-built "vault" templates mixed into the BSP generation
+
+4. WANDS ARE OVERPOWERED / SPELLS ARE UNDERPOWERED
+   A Fire Wand (4d6, no MP cost, 5-10 charges) outclasses most spells. Fireball
+   costs 14 MP for 8d6 — better damage but you get maybe 2-3 casts. Wands
+   trivialize mid-game combat. Either nerf wand damage, make them rarer, or buff
+   spell utility to compensate.
+
+5. COMPANION SYSTEM IS SHALLOW
+   Companions are basically turrets that follow you. They don't level up, can't
+   equip gear, have no dialogue beyond hire/insult, and don't react to events.
+   Before adding content that interacts with companions (new races with new
+   hostility dynamics, sub-levels with companion-specific events), they need
+   more depth:
+   - Leveling or scaling with the player
+   - Reactions to gods, floors, bosses
+   - Equipment slots (even just weapon + armor)
+
+6. STATUS EFFECTS NEED COUNTERPLAY
+   Once you're poisoned or paralyzed, you just wait it out. No antidote potions
+   (Clarity cures everything but is rare), no cleric "cure poison" spell, no
+   resistance mechanic that reduces duration. The player has very few ways to
+   inflict statuses either — almost entirely reactive. Needs:
+   - Cure-specific potions or spells
+   - Player-inflictable statuses via melee (poisoned blade, stunning blow)
+   - Resistance stat or saving throws each turn to shake effects early
+
+7. EARLY GAME IS TOO QUIET
+   Floor 1 has no shops, no NPCs, and weak monsters. Floors 1-4 feel like a
+   warm-up rather than a challenge. The game doesn't start making interesting
+   decisions until floor 5+. Consider front-loading some interesting choices
+   (an early NPC encounter, a guaranteed shrine on floor 2, etc.).
+
+8. NO-GOD BUILDS ARE DEAD
+   Refusing all gods means no active abilities, no gifts, no piety bonuses.
+   There's no "atheist" path with its own rewards. This limits build variety.
+
+
+Priority Order
+--------------
+Tackle these before adding new classes, races, and sublevels:
+
+  1. Item depth (unique items, weapon properties, meaningful trade-offs)
+  2. Dungeon variety (themed floors, vaults, special rooms)
+  3. Spell system expansion (utility spells, buffs/debuffs, tactical options)
+  4. Wand/spell balance pass
+  5. Status effect counterplay (cures, resistances, player-inflicted statuses)
+  6. Companion depth (leveling, reactions, basic equipment)
+
+These build the foundation that new classes, races, and sublevels will plug
+into. Adding a Rogue class is meaningless if there are no traps to create, no
+stealth mechanics, and no daggers with special properties. Adding a Crypt
+sub-level is pointless if it looks and plays like every other floor.

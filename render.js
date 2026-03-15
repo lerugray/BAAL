@@ -138,8 +138,11 @@ function getViewOffset() {
   if(!G.player) return {ox:0, oy:0, cols:MAP_W, rows:MAP_H};
   const cols = Math.floor(canvas.width / CELL_SIZE);
   const rows = Math.floor(canvas.height / CELL_SIZE);
-  let ox = G.player.x - Math.floor(cols/2);
-  let oy = G.player.y - Math.floor(rows/2);
+  // Center on look/stair-find cursor when active
+  const cx = (G.lookMode || G.stairFindMode) && G.lookX !== undefined ? G.lookX : G.player.x;
+  const cy = (G.lookMode || G.stairFindMode) && G.lookY !== undefined ? G.lookY : G.player.y;
+  let ox = cx - Math.floor(cols/2);
+  let oy = cy - Math.floor(rows/2);
   ox = Math.max(0, Math.min(MAP_W - cols, ox));
   oy = Math.max(0, Math.min(MAP_H - rows, oy));
   return { ox, oy, cols, rows };

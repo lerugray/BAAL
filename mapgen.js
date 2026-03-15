@@ -301,7 +301,7 @@ function generateLevel(floor) {
   // Boss monster
   const bossKeys = Object.keys(MONSTER_TEMPLATES).filter(k => {
     const v = MONSTER_TEMPLATES[k];
-    return v.isBoss && v.floor[0] === floor && !G.killedBosses?.includes(k);
+    return v.isBoss && !v.branch && v.floor[0] === floor && !G.killedBosses?.includes(k);
   });
   if(bossKeys.length > 0) {
     const bk = bossKeys[0];

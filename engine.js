@@ -3913,6 +3913,12 @@ function descend() {
     return;
   }
 
+  // Collect adjacent alerted monsters that follow down stairs
+  const followers = level.monsters.filter(m =>
+    m.alerted && !m.isBoss && !m.neutral &&
+    Math.abs(m.x - player.x) <= 1 && Math.abs(m.y - player.y) <= 1
+  );
+
   G.floor++;
   log(`You descend to floor ${G.floor}.`, 'system');
   flash(`FLOOR ${G.floor}`);
@@ -3977,6 +3983,25 @@ function descend() {
   // Update companion positions
   player.companions.forEach(c => { c.x = sx + 1; c.y = sy; });
 
+  // Place following monsters near player
+  if(followers.length > 0) {
+    const dirs = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]];
+    for(const m of followers) {
+      for(const [dx,dy] of dirs) {
+        const fx = sx+dx, fy = sy+dy;
+        if(fx>=0 && fx<MAP_W && fy>=0 && fy<MAP_H &&
+           G.level.tiles[fy][fx] !== TILE.WALL &&
+           !G.level.monsters.some(om => om.x===fx && om.y===fy)) {
+          m.x = fx; m.y = fy;
+          m.alerted = true;
+          G.level.monsters.push(m);
+          log(`${m.name} follows you down the stairs!`, 'warning');
+          break;
+        }
+      }
+    }
+  }
+
   computeFOV();
   renderAll();
 
@@ -4018,6 +4043,12 @@ function ascend() {
     return;
   }
 
+  // Collect adjacent alerted monsters that follow up stairs
+  const followers = level.monsters.filter(m =>
+    m.alerted && !m.isBoss && !m.neutral &&
+    Math.abs(m.x - player.x) <= 1 && Math.abs(m.y - player.y) <= 1
+  );
+
   G.floor--;
   if(G.ascending) {
     log(`You ascend to floor ${G.floor}. ${16 - G.floor} floors from the depths, ${G.floor} to go!`, 'system');
@@ -4031,6 +4062,25 @@ function ascend() {
   const [sx, sy] = G.level.startPos;
   player.x = sx; player.y = sy;
   player.companions.forEach(c => { c.x = sx+1; c.y = sy; });
+
+  // Place following monsters near player
+  if(followers.length > 0) {
+    const dirs = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]];
+    for(const m of followers) {
+      for(const [dx,dy] of dirs) {
+        const fx = sx+dx, fy = sy+dy;
+        if(fx>=0 && fx<MAP_W && fy>=0 && fy<MAP_H &&
+           G.level.tiles[fy][fx] !== TILE.WALL &&
+           !G.level.monsters.some(om => om.x===fx && om.y===fy)) {
+          m.x = fx; m.y = fy;
+          m.alerted = true;
+          G.level.monsters.push(m);
+          log(`${m.name} follows you up the stairs!`, 'warning');
+          break;
+        }
+      }
+    }
+  }
 
   computeFOV();
   renderAll();

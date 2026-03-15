@@ -1,5 +1,63 @@
 let canvas, ctx;
 
+// ─── SOUND SYSTEM ───────────────────────────────────────────
+const SFX_PATH = 'oryx_8-bit_sounds/';
+const SFX_CACHE = {};
+let sfxEnabled = true;
+let sfxVolume = 0.4;
+
+function playSound(path) {
+  if(!sfxEnabled) return;
+  const full = SFX_PATH + path;
+  if(!SFX_CACHE[full]) {
+    SFX_CACHE[full] = new Audio(full);
+    SFX_CACHE[full].volume = sfxVolume;
+  }
+  const snd = SFX_CACHE[full].cloneNode();
+  snd.volume = sfxVolume;
+  snd.play().catch(() => {}); // ignore autoplay restrictions
+}
+
+// Semantic sound triggers
+const SFX = {
+  hit:          () => playSound('impacts/hit.wav'),
+  miss:         () => playSound('abilities/woosh_a.wav'),
+  critHit:      () => playSound('impacts/impact_a.wav'),
+  playerHit:    () => playSound('impacts/impact_b.wav'),
+  kill:         () => playSound('impacts/boom_a.wav'),
+  shoot:        () => playSound('abilities/shoot_a.wav'),
+  spell:        () => playSound('abilities/spell_a.wav'),
+  heal:         () => playSound('abilities/heal_a.wav'),
+  fire:         () => playSound('abilities/fire_a.wav'),
+  lightning:    () => playSound('abilities/lightning_a.wav'),
+  teleport:     () => playSound('abilities/teleport.wav'),
+  sorcery:      () => playSound('abilities/sorcery.wav'),
+  summon:       () => playSound('abilities/summon.wav'),
+  door:         () => playSound('misc/open.wav'),
+  stairs:       () => playSound('misc/step.wav'),
+  pickup:       () => playSound('misc/collect_a.wav'),
+  gold:         () => playSound('interface/gold.wav'),
+  levelUp:      () => playSound('interface/level_up.wav'),
+  death:        () => playSound('interface/lose_a.wav'),
+  select:       () => playSound('interface/select_a.wav'),
+  click:        () => playSound('interface/click.wav'),
+  error:        () => playSound('interface/error.wav'),
+  trap:         () => playSound('impacts/spike_trap_a.wav'),
+  poison:       () => playSound('status/poison.wav'),
+  confuse:      () => playSound('status/confuse.wav'),
+  curse:        () => playSound('status/curse.wav'),
+  freeze:       () => playSound('status/freeze.wav'),
+  mutation:     () => playSound('status/mutation.wav'),
+  skeleton:     () => playSound('creatures/skeleton.wav'),
+  snake:        () => playSound('creatures/snake.wav'),
+  wings:        () => playSound('creatures/wings.wav'),
+  swarm:        () => playSound('creatures/swarm.wav'),
+  explode:      () => playSound('impacts/explode_a.wav'),
+  score:        () => playSound('interface/score.wav'),
+  coin:         () => playSound('interface/coin.wav'),
+  paper:        () => playSound('interface/paper.wav'),
+};
+
 // ─── ANIMATION LOOP ──────────────────────────────────────────
 let animFrameId = null;
 let lastRenderTime = 0;
@@ -436,6 +494,7 @@ const MONSTER_CHAR_ROW = {
   shade: 41, fury: 38, titan: 28, cerberus: 36, styx_boatman: 41,
   // Main dungeon mid-game
   manticore: 36, phase_spider: 35, wyvern: 38, clay_golem: 28, dark_elf: 15,
+  djinn: 4, skeleton_archer: 24, wight: 25, lich: 25, beholder: 29,
 };
 
 // --- Boss → boss row mapping ---
@@ -471,11 +530,11 @@ const PLAYER_RACE_ROW = {
 
 // Race tint colors — applied as a semi-transparent overlay on the player sprite
 const RACE_TINT = {
-  halforc:  'rgba(60, 120, 40, 0.25)',
-  tiefling: 'rgba(160, 40, 40, 0.25)',
-  lizardman:'rgba(40, 140, 60, 0.3)',
-  gnome:    'rgba(100, 80, 160, 0.15)',
-  halfling: 'rgba(160, 140, 80, 0.1)',
+  halforc:  'rgba(40, 160, 20, 0.6)',
+  tiefling: 'rgba(190, 20, 20, 0.55)',
+  lizardman:'rgba(20, 170, 40, 0.6)',
+  gnome:    'rgba(120, 60, 180, 0.35)',
+  halfling: 'rgba(180, 140, 60, 0.3)',
 };
 
 // --- Item → world tile mapping (Remaster) ---
@@ -530,7 +589,8 @@ const ITEM_GLYPH_WORLD_TILE = {
   '%': 200,  // turkey (food)
   '$': 226,  // gold
   '*': 195,  // stones
-  '(': 184,  // shield
+  '(': 193,  // bow (ranged weapon)
+  ']': 184,  // shield
 };
 
 // --- Classic Roguelike fallback data (unchanged from original) ---
@@ -622,9 +682,18 @@ function getMonsterEntityInfo(monster) {
   return info;
 }
 
+// Shapeshift form → character row
+const SHIFT_FORM_ROW = { 1: CHAR_ROWS.wolf, 2: CHAR_ROWS.barbarian, 3: CHAR_ROWS.bat };
+
 // Build entityInfo for the player
 function getPlayerEntityInfo() {
   const p = G.player;
+  // Shapeshift overrides sprite
+  if(p.status.shiftForm && SHIFT_FORM_ROW[p.status.shiftForm] !== undefined) {
+    const info = { charRow: SHIFT_FORM_ROW[p.status.shiftForm], facing: p.facing || 'd', animState: p.animState || 'idle' };
+    info.classicTile = TILE_MAP.player;
+    return info;
+  }
   let row = PLAYER_RACE_ROW[p.race];
   if(row === undefined) row = PLAYER_CHAR_ROW[p.cls] || 10;
   const info = { charRow: row, facing: p.facing || 'd', animState: p.animState || 'idle' };
@@ -730,12 +799,20 @@ function drawEntity(px, py, ch, color, entityInfo) {
   if(entityInfo.charRow !== undefined && SHEETS.character.ready) {
     const tileId = getCharTileId(entityInfo.charRow, entityInfo.facing || 'd', entityInfo.animState || 'idle');
     drawFromSheet('character', tileId, px, py);
-    // Apply race tint if specified
+    // Apply race tint on offscreen canvas so source-atop only affects this sprite
     if(entityInfo.tint) {
-      ctx.globalCompositeOperation = 'source-atop';
-      ctx.fillStyle = entityInfo.tint;
-      ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
-      ctx.globalCompositeOperation = 'source-over';
+      const sheet = SHEETS.character;
+      const oc = document.createElement('canvas');
+      oc.width = CELL_SIZE; oc.height = CELL_SIZE;
+      const ox = oc.getContext('2d');
+      ox.imageSmoothingEnabled = false;
+      const sx = (tileId % sheet.cols) * sheet.tileSize;
+      const sy = Math.floor(tileId / sheet.cols) * sheet.tileSize;
+      ox.drawImage(sheet.img, sx, sy, sheet.tileSize, sheet.tileSize, 0, 0, CELL_SIZE, CELL_SIZE);
+      ox.globalCompositeOperation = 'source-atop';
+      ox.fillStyle = entityInfo.tint;
+      ox.fillRect(0, 0, CELL_SIZE, CELL_SIZE);
+      ctx.drawImage(oc, px, py);
     }
     return;
   }

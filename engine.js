@@ -483,6 +483,7 @@ function levelUp(player) {
   }
   
   log(`*** LEVEL UP! You are now level ${player.level}! +${hpGain} HP, +${mpGain} MP ***`, 'good');
+  if(typeof SFX !== 'undefined') SFX.levelUp();
   flash(`LEVEL ${player.level}!`);
 }
 
@@ -592,6 +593,7 @@ function tryMove(dx, dy) {
   if(tile === TILE.DOOR) {
     level.tiles[ny][nx] = TILE.FLOOR;
     log('You open the door.', 'info');
+    if(typeof SFX !== 'undefined') SFX.door();
     player.x = nx; player.y = ny;
     return true;
   }
@@ -693,6 +695,7 @@ function checkTrap(x, y) {
   trap.triggered = true;
   trap.hidden = false; // Reveal triggered trap on map
   log(`You triggered a ${trap.subtype}!`, 'warning');
+  if(typeof SFX !== 'undefined') SFX.trap();
   
   switch(trap.subtype) {
     case 'dart_trap':
@@ -765,6 +768,7 @@ function autoPickup(x, y) {
     if(item.type === 'gold') {
       p.gold += item.amount;
       log(`You pick up ${item.amount} gold.`, 'loot');
+      if(typeof SFX !== 'undefined') SFX.gold();
       G.level.items = G.level.items.filter(i => i !== item);
       gainPiety('collecting_gold', 1);
       continue;
@@ -774,6 +778,7 @@ function autoPickup(x, y) {
     const dname = getItemDisplayName(item);
     p.inventory.push(item);
     log(`You pick up ${dname}.`, 'loot');
+    if(typeof SFX !== 'undefined') SFX.pickup();
     G.level.items = G.level.items.filter(i => i !== item);
     checkRunePickup(item);
   }
@@ -1036,6 +1041,7 @@ function attackMonster(monster) {
 
     let msg = crit ? `CRITICAL HIT! You strike ${monster.name} for ${dmg} damage!` : `You hit ${monster.name} for ${dmg} damage.`;
     log(msg, 'combat');
+    if(typeof SFX !== 'undefined') { crit ? SFX.critHit() : SFX.hit(); }
     
     gainPiety('kills', 0.5);
     gainPiety('honorable_combat', 0.3);
@@ -1103,6 +1109,7 @@ function attackMonster(monster) {
     }
   } else {
     log(`You miss ${monster.name}.`, 'combat');
+    if(typeof SFX !== 'undefined') SFX.miss();
   }
 
   // Weapon speed: slow weapons incur a speed debt (skip next turn)
@@ -1143,6 +1150,7 @@ function monsterAttack(monster) {
       p.hp -= dmg;
       if(typeof addTileEffect === 'function') addTileEffect(p.x, p.y, [255,50,50], 250);
       log(`${monster.name} hits you for ${dmg} damage!`, 'combat');
+      if(typeof SFX !== 'undefined') SFX.playerHit();
       
       // Drain life
       if(monster.drainLife) {
@@ -1244,6 +1252,7 @@ function killMonster(monster) {
   G.level.monsters = G.level.monsters.filter(m => m !== monster);
 
   log(`You kill ${monster.name}!`, 'good');
+  if(typeof SFX !== 'undefined') SFX.kill();
   gainXP(monster.xp);
   gainPiety('kills', 2);
   gainPiety('killing_evil', monster.undead ? 3 : 1);
@@ -2188,6 +2197,10 @@ function endTurn() {
   if(p.status.haste > 0 && G.turn % 2 === 0) {
     p._bonusAction = true;
   }
+  // Hawk form: bonus action every other turn (fast movement)
+  if(p._hawkSpeed && G.turn % 2 === 1) {
+    p._bonusAction = true;
+  }
 
   // Update monsters
   updateMonsters();
@@ -2218,6 +2231,10 @@ function endTurn() {
   // Auto-explore
   if(G.autoExploreActive && !G.gameOver) {
     setTimeout(autoExploreStep, 50);
+  }
+  // Auto-travel (stair-find, etc.)
+  if(G.autoTravelPath && G.autoTravelPath.length > 0 && !G.gameOver) {
+    setTimeout(autoTravelStep, 50);
   }
 }
 
@@ -2377,6 +2394,83 @@ function autoExploreStep() {
   endTurn();
 }
 
+// ─── AUTO-TRAVEL ─────────────────────────────────────────────
+function autoTravelStep() {
+  if(!G.autoTravelPath || G.autoTravelPath.length === 0 || G.gameOver) {
+    G.autoTravelPath = null;
+    return;
+  }
+  const p = G.player;
+  const level = G.level;
+  // Stop for danger (same checks as auto-explore)
+  const nearMonster = level.monsters.some(m =>
+    !m.neutral && !m.disguised && Math.sqrt((m.x-p.x)**2+(m.y-p.y)**2) <= 6 && level.visible?.has(`${m.x},${m.y}`)
+  );
+  const nearHostileNPC = (level.npcs || []).some(n =>
+    n.hostile && Math.sqrt((n.x-p.x)**2+(n.y-p.y)**2) <= 6 && level.visible?.has(`${n.x},${n.y}`)
+  );
+  if(nearMonster || nearHostileNPC) {
+    G.autoTravelPath = null;
+    log('Auto-travel stopped: danger nearby.', 'warning');
+    return;
+  }
+  if(p.hp < p.maxHp * 0.3) {
+    G.autoTravelPath = null;
+    log('Auto-travel stopped: low health!', 'warning');
+    return;
+  }
+  const [nx, ny] = G.autoTravelPath.shift();
+  const moved = tryMove(nx - p.x, ny - p.y);
+  if(!moved) {
+    G.autoTravelPath = null;
+    log('Auto-travel stopped: path blocked.', 'info');
+    return;
+  }
+  if(G.autoTravelPath.length === 0) {
+    G.autoTravelPath = null;
+    log('Arrived at destination.', 'info');
+  }
+  endTurn();
+}
+
+function findStairs(type) {
+  const level = G.level;
+  const stairs = [];
+  const tileType = type === 'down' ? TILE.STAIRS_DOWN : TILE.STAIRS_UP;
+  for(let y = 0; y < MAP_H; y++) {
+    for(let x = 0; x < MAP_W; x++) {
+      if(level.tiles[y][x] === tileType && level.explored.has(`${x},${y}`)) {
+        stairs.push({x, y});
+      }
+    }
+  }
+  return stairs;
+}
+
+function startAutoTravel(tx, ty) {
+  const p = G.player;
+  const level = G.level;
+  // BFS to find path
+  const vis = new Set([`${p.x},${p.y}`]);
+  const q = [[p.x, p.y, []]];
+  while(q.length > 0) {
+    const [cx, cy, cpath] = q.shift();
+    for(const [dx, dy] of [[0,-1],[0,1],[-1,0],[1,0],[-1,-1],[-1,1],[1,-1],[1,1]]) {
+      const nx = cx+dx, ny = cy+dy;
+      const k = `${nx},${ny}`;
+      if(nx<0||nx>=MAP_W||ny<0||ny>=MAP_H||vis.has(k)) continue;
+      vis.add(k);
+      if(level.tiles[ny][nx] === TILE.WALL) continue;
+      // Don't path through monsters
+      if(level.monsters.some(m => m.x === nx && m.y === ny)) continue;
+      const np = [...cpath, [nx,ny]];
+      if(nx===tx && ny===ty) { G.autoTravelPath = np; autoTravelStep(); return; }
+      q.push([nx,ny,np]);
+    }
+  }
+  log('No path to that staircase.', 'warning');
+}
+
 // ─── DRUID SHAPESHIFTING ─────────────────────────────────────
 function applyShapeshift(form) {
   const p = G.player;
@@ -2404,6 +2498,8 @@ function applyShapeshift(form) {
     p.maxHp -= hpLoss;
     p.hp = Math.min(p.hp, p.maxHp);
     p.status.fly = 30;
+    p.stats.dex += 4;
+    p._hawkSpeed = true;
     log('You transform into a hawk! Swift and airborne.', 'good');
   }
 }
@@ -2422,6 +2518,7 @@ function revertShapeshift() {
   delete p.status.shifted;
   delete p.status.shiftForm;
   delete p.status.fly;
+  delete p._hawkSpeed;
   log('You return to your natural form.', 'info');
 }
 
@@ -2444,7 +2541,15 @@ function castSpell(spellKey) {
   
   p.mp -= spell.mp;
   gainPiety('casting_spells', 1);
-  
+  if(typeof SFX !== 'undefined') {
+    if(spell.effect === 'heal' || spell.effect === 'heal_full') SFX.heal();
+    else if(spell.effect === 'fireball' || spell.effect === 'fire_bolt') SFX.fire();
+    else if(spell.effect === 'lightning') SFX.lightning();
+    else if(spell.effect === 'teleport' || spell.effect === 'blink') SFX.teleport();
+    else if(spell.effect === 'summon') SFX.summon();
+    else SFX.spell();
+  }
+
   switch(spell.effect) {
     case 'heal':
       const heal = rng.dice(2, 6, p.level);
@@ -2914,7 +3019,7 @@ function zagyRandomEvent(forced=false) {
     () => {
       const n = rng.int(2,5);
       for(let i=0;i<n;i++) {
-        const key = rng.pick(Object.keys(MONSTER_TEMPLATES).filter(k => !MONSTER_TEMPLATES[k].isBoss));
+        const key = rng.pick(Object.keys(MONSTER_TEMPLATES).filter(k => !MONSTER_TEMPLATES[k].isBoss && !MONSTER_TEMPLATES[k].branch));
         const mv = MONSTER_TEMPLATES[key];
         const mx = G.player.x + rng.int(-4,4);
         const my = G.player.y + rng.int(-4,4);
@@ -3558,7 +3663,7 @@ function fireWand(wand) {
       if(target.isBoss) {
         log(`${target.name} resists the polymorph!`, 'warning');
       } else {
-        const eligible = Object.entries(MONSTER_TEMPLATES).filter(([k,v]) => !v.unique && !v.isBoss);
+        const eligible = Object.entries(MONSTER_TEMPLATES).filter(([k,v]) => !v.unique && !v.isBoss && !v.branch);
         if(eligible.length > 0) {
           const [newKey, newTemplate] = rng.pick(eligible);
           const oldName = target.name;
@@ -3794,6 +3899,7 @@ function descend() {
   G.floor++;
   log(`You descend to floor ${G.floor}.`, 'system');
   flash(`FLOOR ${G.floor}`);
+  if(typeof SFX !== 'undefined') SFX.stairs();
 
   // Floor theme entry message
   const entryTheme = getFloorTheme(G.floor);
@@ -4098,6 +4204,7 @@ function die(cause) {
   }
   G.gameOver = true;
   G.lastKilledBy = cause;
+  if(typeof SFX !== 'undefined') SFX.death();
   deleteSave(); // Permadeath — remove save
   saveGhost(G.player);
   

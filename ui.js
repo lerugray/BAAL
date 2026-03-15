@@ -695,6 +695,49 @@ function handleKey(e) {
     return;
   }
 
+  // Stair-find mode (Shift+X, then < or > to cycle stairs, Enter to auto-travel)
+  if(G.stairFindMode) {
+    e.preventDefault();
+    if(e.key === 'Escape') {
+      G.stairFindMode = false;
+      const li = document.getElementById('look-info');
+      if(li) li.style.display = 'none';
+      log('Stair-find cancelled.', 'info');
+      renderAll();
+      return;
+    }
+    if(e.key === '>' || e.key === '.') {
+      // Cycle to next down stair
+      const stairs = findStairs('down');
+      if(stairs.length === 0) { log('No discovered stairs down.', 'info'); return; }
+      G._stairIdx = ((G._stairIdx || 0) + 1) % stairs.length;
+      G.lookX = stairs[G._stairIdx].x; G.lookY = stairs[G._stairIdx].y;
+      log(`Stairs down (${G._stairIdx+1}/${stairs.length})`, 'system');
+      renderLookCursor();
+      return;
+    }
+    if(e.key === '<' || e.key === ',') {
+      // Cycle to next up stair
+      const stairs = findStairs('up');
+      if(stairs.length === 0) { log('No discovered stairs up.', 'info'); return; }
+      G._stairIdx = ((G._stairIdx || 0) + 1) % stairs.length;
+      G.lookX = stairs[G._stairIdx].x; G.lookY = stairs[G._stairIdx].y;
+      log(`Stairs up (${G._stairIdx+1}/${stairs.length})`, 'system');
+      renderLookCursor();
+      return;
+    }
+    if(e.key === 'Enter') {
+      G.stairFindMode = false;
+      const li = document.getElementById('look-info');
+      if(li) li.style.display = 'none';
+      if(G.lookX !== undefined && G.lookY !== undefined) {
+        startAutoTravel(G.lookX, G.lookY);
+      }
+      return;
+    }
+    return;
+  }
+
   // Look mode
   if(G.lookMode) {
     e.preventDefault();
@@ -850,11 +893,12 @@ function handleKey(e) {
     return;
   }
 
-  // Cancel auto-explore or resting on any movement key
-  if(moveKeys[key] && (G.autoExploreActive || G.restingActive)) {
+  // Cancel auto-explore, auto-travel, or resting on any movement key
+  if(moveKeys[key] && (G.autoExploreActive || G.restingActive || G.autoTravelPath)) {
     e.preventDefault();
     G.autoExploreActive = false;
     G.restingActive = false;
+    G.autoTravelPath = null;
     log('Stopped.', 'info');
     return;
   }
@@ -900,8 +944,11 @@ function handleKey(e) {
     case 'g': case 'G':
       prayGod();
       break;
-    case 'e': case 'E':
+    case 'e':
       eatFood();
+      break;
+    case 'E':
+      openInventory();
       break;
     case 'q': case 'Q':
       drinkPotion();
@@ -930,6 +977,12 @@ function handleKey(e) {
     case 'x':
       G.attackMode = true;
       log('Attack mode — choose a direction to strike.', 'info');
+      break;
+    case 'X':
+      G.stairFindMode = true;
+      G._stairIdx = -1;
+      G.lookX = G.player.x; G.lookY = G.player.y;
+      log('STAIR FIND — Press > for stairs down, < for stairs up, Enter to travel, ESC to cancel.', 'system');
       break;
     case 'p':
       if(G.player.equipped.weapon?.reach) {

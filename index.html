@@ -6,6 +6,7 @@
 <title>BAAL - Seek the Rune</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap');
+@font-face { font-family: 'Oryx Simplex'; src: url('oryx_8-bit_remaster/oryx-simplex.ttf') format('truetype'); }
 
 :root {
   --bg: #0c0b10;
@@ -66,7 +67,7 @@ body {
   padding: 4px 8px;
   overflow: hidden;
   font-size: 13px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Oryx Simplex', 'Oryx Simplex', 'Share Tech Mono', monospace;
   flex: 1;
   min-width: 0;
 }
@@ -101,7 +102,7 @@ body {
 .hud-section:last-child { border-right: none; }
 .hud-identity { min-width: 100px; }
 .hud-name { color: var(--gold); font-size: 18px; }
-.hud-sub { color: var(--gray); font-size: 14px; font-family: 'Share Tech Mono', monospace; }
+.hud-sub { color: var(--gray); font-size: 14px; font-family: 'Oryx Simplex', 'Oryx Simplex', 'Share Tech Mono', monospace; }
 .hud-vitals { min-width: 180px; gap: 3px; }
 .hud-bar-row {
   display: flex;
@@ -125,8 +126,8 @@ body {
 .bar-mp { background: var(--blue); }
 .bar-xp { background: var(--gold); }
 .bar-hunger { background: #886622; }
-.hud-bar-label { min-width: 22px; color: var(--gray); font-family: 'Share Tech Mono', monospace; font-size: 14px; }
-.hud-bar-val { min-width: 60px; text-align: right; font-size: 13px; color: var(--white); font-family: 'Share Tech Mono', monospace; }
+.hud-bar-label { min-width: 22px; color: var(--gray); font-family: 'Oryx Simplex', 'Oryx Simplex', 'Share Tech Mono', monospace; font-size: 14px; }
+.hud-bar-val { min-width: 60px; text-align: right; font-size: 13px; color: var(--white); font-family: 'Oryx Simplex', 'Oryx Simplex', 'Share Tech Mono', monospace; }
 .hud-stats { min-width: 110px; }
 .hud-stat-grid {
   display: grid;
@@ -134,7 +135,7 @@ body {
   gap: 1px 6px;
   font-size: 13px;
 }
-.hud-stat-grid .stat-label { color: var(--gray); font-size: 13px; font-family: 'Share Tech Mono', monospace; }
+.hud-stat-grid .stat-label { color: var(--gray); font-size: 13px; font-family: 'Oryx Simplex', 'Oryx Simplex', 'Share Tech Mono', monospace; }
 .hud-stat-grid .stat-val { color: var(--cyan); }
 .hud-equip { min-width: 170px; }
 .equip-strip {
@@ -281,11 +282,11 @@ body {
   font-size: 22px;
   color: var(--gray);
   margin-bottom: 24px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Oryx Simplex', 'Oryx Simplex', 'Share Tech Mono', monospace;
   letter-spacing: 3px;
   text-transform: uppercase;
 }
-.overlay-box p { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: #8a8898; line-height: 1.7; margin-bottom: 12px; }
+.overlay-box p { font-family: 'Oryx Simplex', 'Oryx Simplex', 'Share Tech Mono', monospace; font-size: 13px; color: #8a8898; line-height: 1.7; margin-bottom: 12px; }
 
 .menu-btn {
   display: block;
@@ -317,7 +318,7 @@ body {
   border: 1px solid var(--border);
   cursor: pointer;
   font-size: 14px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Oryx Simplex', 'Oryx Simplex', 'Share Tech Mono', monospace;
   text-align: left;
   transition: all 0.15s;
   background: #0a0a12;
@@ -329,7 +330,7 @@ body {
 .char-option p { color: var(--gray); font-size: 12px; line-height: 1.4; }
 .char-option .bonus { color: var(--green); font-size: 12px; margin-top: 4px; }
 
-.step-indicator { color: var(--gray); font-size: 14px; font-family: 'Share Tech Mono'; margin-bottom: 15px; }
+.step-indicator { color: var(--gray); font-size: 14px; font-family: 'Oryx Simplex', 'Share Tech Mono'; margin-bottom: 15px; }
 
 /* Inventory screen */
 #inv-screen {
@@ -362,7 +363,7 @@ body {
   background: var(--panel-bg);
   border: 1px solid var(--border);
   padding: 12px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Oryx Simplex', 'Oryx Simplex', 'Share Tech Mono', monospace;
   font-size: 13px;
 }
 .item-detail h3 { color: var(--gold); font-family: 'VT323'; font-size: 24px; margin-bottom: 8px; }
@@ -414,17 +415,17 @@ body {
 }
 .god-card:hover { border-color: var(--purple); background: #0f0a1a; }
 .god-card h3 { color: var(--purple); font-size: 22px; }
-.god-card .god-domain { color: var(--gray); font-size: 13px; font-family: 'Share Tech Mono'; }
-.god-card .god-flavor { color: var(--white); font-size: 13px; font-family: 'Share Tech Mono'; line-height: 1.5; margin-top: 5px; }
-.god-card .god-gifts { color: var(--green); font-size: 12px; font-family: 'Share Tech Mono'; margin-top: 5px; }
+.god-card .god-domain { color: var(--gray); font-size: 13px; font-family: 'Oryx Simplex', 'Share Tech Mono'; }
+.god-card .god-flavor { color: var(--white); font-size: 13px; font-family: 'Oryx Simplex', 'Share Tech Mono'; line-height: 1.5; margin-top: 5px; }
+.god-card .god-gifts { color: var(--green); font-size: 12px; font-family: 'Oryx Simplex', 'Share Tech Mono'; margin-top: 5px; }
 .god-detail-section { margin:8px 0 4px; padding:6px 0; border-top:1px solid #333; }
 .god-detail-section h4 { color:var(--amber); font-size:16px; margin-bottom:4px; }
-.god-detail-gift { color:var(--green); font-size:13px; font-family:'Share Tech Mono'; margin:2px 0 2px 10px; }
+.god-detail-gift { color:var(--green); font-size:13px; font-family:'Oryx Simplex', 'Share Tech Mono'; margin:2px 0 2px 10px; }
 .god-detail-gift .gift-thresh { color:var(--gray); font-size:12px; }
-.god-detail-piety { font-size:13px; font-family:'Share Tech Mono'; margin:2px 0 2px 10px; }
+.god-detail-piety { font-size:13px; font-family:'Oryx Simplex', 'Share Tech Mono'; margin:2px 0 2px 10px; }
 .god-detail-piety.gain { color:#66cc66; }
 .god-detail-piety.loss { color:#cc6666; }
-.god-alignment-tag { font-size:14px; font-family:'Share Tech Mono'; padding:1px 6px; border:1px solid; display:inline-block; margin-left:6px; }
+.god-alignment-tag { font-size:14px; font-family:'Oryx Simplex', 'Share Tech Mono'; padding:1px 6px; border:1px solid; display:inline-block; margin-left:6px; }
 .god-card-clickable { cursor:pointer; }
 .god-card-clickable:hover { border-color:var(--purple); background:#0f0a1a; }
 .god-card-expanded { cursor:default; }
@@ -436,7 +437,7 @@ body {
   top: 4px; left: 8px;
   color: var(--amber);
   font-size: 14px;
-  font-family: 'Share Tech Mono';
+  font-family: 'Oryx Simplex', 'Share Tech Mono';
   pointer-events: none;
 }
 
@@ -459,7 +460,7 @@ body {
   padding: 20px 30px;
   max-width: 900px;
   width: 100%;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Oryx Simplex', 'Oryx Simplex', 'Share Tech Mono', monospace;
   font-size: 13px;
   border-radius: 6px;
 }
@@ -497,8 +498,8 @@ body {
 .spell-key { color: var(--amber); }
 .spell-name { color: var(--cyan); font-size: 18px; }
 .spell-cost { color: var(--blue); font-size: 14px; }
-.spell-level { color: var(--gray); font-size: 13px; font-family: 'Share Tech Mono'; }
-.spell-desc { color: var(--gray); font-size: 13px; font-family: 'Share Tech Mono'; padding: 2px 8px 6px 40px; }
+.spell-level { color: var(--gray); font-size: 13px; font-family: 'Oryx Simplex', 'Share Tech Mono'; }
+.spell-desc { color: var(--gray); font-size: 13px; font-family: 'Oryx Simplex', 'Share Tech Mono'; padding: 2px 8px 6px 40px; }
 
 /* Target cursor flash */
 @keyframes cursorFlash { 0%,100%{opacity:1} 50%{opacity:0.3} }
@@ -548,7 +549,7 @@ body {
 
 
 /* Monster panel */
-#monster-panel { font-size:12px; font-family:'Share Tech Mono',monospace; }
+#monster-panel { font-size:12px; font-family:'Oryx Simplex', 'Share Tech Mono',monospace; }
 .mon-entry { padding: 2px 0; border-bottom: 1px solid #111; }
 .mon-name { color: var(--white); font-size:13px; }
 .mon-desc { color: var(--gray); font-size:11px; }
@@ -572,8 +573,8 @@ body {
 .mut-panel h2 { color:var(--green); font-size:28px; border-bottom:1px solid var(--border); padding-bottom:6px; margin-bottom:10px; }
 .mut-entry { padding:6px 8px; border-bottom:1px solid #111; }
 .mut-name { color:var(--green); font-size:18px; }
-.mut-pos { color:var(--cyan); font-size:13px; font-family:'Share Tech Mono'; }
-.mut-neg { color:var(--red); font-size:13px; font-family:'Share Tech Mono'; }
+.mut-pos { color:var(--cyan); font-size:13px; font-family:'Oryx Simplex', 'Share Tech Mono'; }
+.mut-neg { color:var(--red); font-size:13px; font-family:'Oryx Simplex', 'Share Tech Mono'; }
 
 /* Alignment screen */
 #alignment-screen { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.92); z-index:999; display:none; align-items:center; justify-content:center; }
@@ -600,7 +601,7 @@ body {
 #look-info {
   position:absolute; bottom:24px; left:5px;
   background:rgba(0,0,0,0.85); border:1px solid var(--cyan);
-  color:var(--cyan); font-family:'Share Tech Mono'; font-size:12px;
+  color:var(--cyan); font-family:'Oryx Simplex', 'Share Tech Mono'; font-size:12px;
   padding:4px 8px; max-width:400px; pointer-events:none; z-index:11;
 }
 
@@ -623,7 +624,7 @@ body {
     <button class="menu-btn" id="continue-btn" onclick="continueGame()" style="display:none;border-color:var(--green);color:var(--green)">CONTINUE</button>
     <button class="menu-btn" onclick="showHelp()">HELP &amp; CONTROLS</button>
     <p style="color:#444;font-size:10px;margin-top:20px;letter-spacing:2px;">INSPIRED BY 1974 D&amp;D · DCSS · WIZARDRY</p>
-    <p style="color:var(--gold);font-size:13px;margin-top:6px;font-family:'Share Tech Mono';letter-spacing:1px;">A Game by Ray Weiss</p>
+    <p style="color:var(--gold);font-size:13px;margin-top:6px;font-family:'Oryx Simplex', 'Share Tech Mono';letter-spacing:1px;">A Game by Ray Weiss</p>
   </div>
 
   <!-- Character creation — lives inside overlay so it gets proper z-index and centering -->
@@ -644,7 +645,7 @@ body {
       <div id="cc-step3" style="display:none;">
         <div class="step-indicator">Step 3 of 3: Name Your Adventurer</div>
         <h2>WHAT ARE YOU CALLED?</h2>
-        <div id="cc-summary" style="margin:15px 0;font-family:'Share Tech Mono';font-size:13px;text-align:left;border:1px solid var(--border);padding:10px;"></div>
+        <div id="cc-summary" style="margin:15px 0;font-family:'Oryx Simplex', 'Share Tech Mono';font-size:13px;text-align:left;border:1px solid var(--border);padding:10px;"></div>
         <input type="text" id="name-input" placeholder="Enter your name..."
           style="width:100%;padding:10px;background:#0a0a12;border:1px solid var(--amber);color:var(--gold);font-family:'VT323';font-size:26px;text-align:center;outline:none;"
           maxlength="20">
@@ -724,7 +725,7 @@ body {
     </div>
 
     <div class="hud-section hud-nearby" style="flex:0; min-width:180px;">
-      <div id="monster-panel" style="font-size:14px; font-family:'Share Tech Mono',monospace;"></div>
+      <div id="monster-panel" style="font-size:14px; font-family:'Oryx Simplex', 'Share Tech Mono',monospace;"></div>
     </div>
 
     <div class="hud-section" id="log-panel"></div>
@@ -746,7 +747,7 @@ body {
     <div id="inv-detail" class="item-detail" style="flex:1">
       <p style="color:var(--gray);font-size:13px;">Select an item to view details.</p>
     </div>
-    <div style="margin-top:auto;padding-top:8px;border-top:1px solid var(--border);font-size:13px;color:var(--gray);font-family:'Share Tech Mono'">
+    <div style="margin-top:auto;padding-top:8px;border-top:1px solid var(--border);font-size:13px;color:var(--gray);font-family:'Oryx Simplex', 'Share Tech Mono'">
       w=wield/wear · t=take off · u=use/quaff · d=drop · ESC=close
     </div>
   </div>
@@ -757,7 +758,7 @@ body {
   <div class="spell-panel">
     <h2>⚡ SPELLS & ABILITIES</h2>
     <div id="spell-list"></div>
-    <div style="margin-top:10px;font-size:13px;color:var(--gray);font-family:'Share Tech Mono'">Press letter to cast · ESC to close</div>
+    <div style="margin-top:10px;font-size:13px;color:var(--gray);font-family:'Oryx Simplex', 'Share Tech Mono'">Press letter to cast · ESC to close</div>
   </div>
 </div>
 

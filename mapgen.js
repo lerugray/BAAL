@@ -165,7 +165,7 @@ function generateLevel(floor) {
   }
 
   // Special rooms (1-2 per floor from middle rooms)
-  const earlyEligible = Object.entries(MONSTER_TEMPLATES).filter(([k, v]) => !v.unique && v.floor[0] <= floor && v.floor[1] >= floor);
+  const earlyEligible = Object.entries(MONSTER_TEMPLATES).filter(([k, v]) => !v.unique && !v.branch && v.floor[0] <= floor && v.floor[1] >= floor);
   if(rooms.length >= 5) {
     const midRooms = rooms.slice(2, -1);
     const numSpecial = rng.int(1, Math.min(2, midRooms.length));
@@ -216,7 +216,7 @@ function generateLevel(floor) {
           break;
         case 'crypt_chamber':
           for(let u=0; u<rng.int(3,5); u++) {
-            const undeadTypes = Object.entries(MONSTER_TEMPLATES).filter(([k,v]) => v.undead && v.floor[0] <= floor && v.floor[1] >= floor);
+            const undeadTypes = Object.entries(MONSTER_TEMPLATES).filter(([k,v]) => v.undead && !v.branch && v.floor[0] <= floor && v.floor[1] >= floor);
             if(undeadTypes.length > 0) {
               const [uk, uv] = rng.pick(undeadTypes);
               const ux = rng.int(sRoom.x+1, sRoom.x+sRoom.w-2);
@@ -266,7 +266,7 @@ function generateLevel(floor) {
   const isAscending = G.ascending;
   const monsterFloor = isAscending ? Math.min(16, floor + Math.floor((16 - floor) * 0.5)) : floor;
   let eligibleMonsters = Object.entries(MONSTER_TEMPLATES).filter(([k, v]) => {
-    return !v.unique && v.floor[0] <= monsterFloor && v.floor[1] >= floor;
+    return !v.unique && !v.branch && v.floor[0] <= monsterFloor && v.floor[1] >= floor;
   });
   // Theme monster bias: double the weight of themed monsters
   if(theme.undeadBoost) {
@@ -433,9 +433,8 @@ function generateItem(floor) {
 
   const key = rng.pick(pool);
   const template = ITEM_TEMPLATES[key] || ITEM_TEMPLATES.ration;
-  const item = { ...template, id: `item_${Date.now()}_${rng.int(0,9999)}` };
+  const item = { ...template, id: `item_${Date.now()}_${rng.int(0,9999)}`, templateKey: key };
   // Track template key for rings/amulets/wands so we can identify the type globally
-  if(item.type === 'ring' || item.type === 'amulet') item.templateKey = key;
   if(item.type === 'wand') {
     item.templateKey = key;
     item.charges = rng.int(3, item.charges + 5);  // Randomize charges per instance

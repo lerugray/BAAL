@@ -24,46 +24,28 @@ Open `Baal_v4e.html` in a web browser. No build step, no dependencies, no server
 - **Discuss before implementing.** Ray prefers to talk through changes before code is written.
 - **Don't guess about other roguelikes.** When referencing DCSS, Caves of Qud, NetHack, etc., always web search for accurate info. Do NOT guess about their mechanics, monsters, or features.
 - **Update documentation** when features are added. Keep `CHANGELOG.md` current.
-- **Edit Baal_v4e.html directly.** Older versions (v4c, v4d) are kept for reference but are not the active build.
+- **Edit the multi-file build** (`index.html`, `data.js`, `engine.js`, `render.js`, `ui.js`). `Baal_v4e.html` is kept as a single-file backup.
 - **Don't bloat CLAUDE.md.** This file is for project structure, conventions, and behavioral rules — not a changelog, wiki, or session memory. When asked to "remember" something, use the memory file, not this file. Only add to CLAUDE.md if it's a permanent project rule or architectural constraint.
 
 ---
 
 ## File Architecture
 
-Single file layout (top to bottom):
+Multi-file layout. Load order: `data.js` → `engine.js` → `render.js` → `ui.js`. All globals remain global (no modules).
 
 ```
-<head>        CSS styles, Google Fonts
-<body>        HTML panels (overlay, game-container, screens)
-<script>
-  RNG                     Seeded xorshift RNG with shuffle/dice helpers
-  IDENTIFICATION SYSTEM   Appearance randomization for potions/scrolls/rings/amulets/wands
-  DATA TABLES             Races, classes, gods, spells, items, monsters, NPCs, mutations
-  MAP GENERATION          BSP-style room/corridor dungeon, 16 floors
-  GHOST SYSTEM            Player ghosts persist in localStorage
-  GAME STATE              initPlayer(), startNewGame(), G object
-  FOV                     Shadowcasting
-  RENDERING               Canvas tile renderer, side panel, minimap
-  LOGGING                 Log panel with color-coded message types
-  STATS/CALCULATIONS      AC, attack bonus, damage bonus, XP tables
-  MOVEMENT & ACTIONS      tryMove(), checkTrap(), autoPickup(), pickupItems()
-  COMBAT                  attackMonster(), monsterAttack(), killMonster()
-  MONSTER AI              updateMonsters(), updateCompanions(), updateNPCs()
-  MUTATIONS               tryGrantMutation(), applyMutationEffects()
-  TURN MANAGEMENT         endTurn() — hunger, poison, regen, status ticks
-  AUTO-EXPLORE            O key BFS pathfinding with item pickup
-  SPELLS/ABILITIES        castSpell(), class abilities
-  GOD SYSTEM              Piety, gifts, wrath, abandonment
-  ITEMS/INVENTORY         useItem(), applyPotion(), applyScroll(), equipItem()
-  STAIRS                  descend(), ascend()
-  SHOPS/NPCS              openShop(), interactNPC(), companion chat
-  UI SCREENS              God screen, alignment screen, character creation
-  INPUT HANDLING          handleKey(), handleInvKey(), handleSpellKey()
-  MENUS                   Consume, identify, pickup, companion chat modals
-  SAVE/QUIT SYSTEM        localStorage save, quit/continue/give-up
-  DEBUG                   Debug mode (type "debug" on title, F2 panel)
-  ENTRY POINT             window.onload
+index.html    HTML shell, CSS styles, Google Fonts, <script> tags
+data.js       RNG, identification system, all data constants (races, classes, gods,
+              spells, items, monsters, NPCs, mutations, TILE enum, TILE_COLORS, FLOOR_THEMES)
+engine.js     Game state (G), initPlayer, startNewGame, generateLevel, FOV, alignment,
+              stats/calculations, movement, combat, monster AI, companion AI, mutations,
+              sound/noise, look command, turn management, auto-explore, spells, god system,
+              items/inventory, stairs, shops, NPC interaction, search, death/win
+render.js     Animation loop, canvas init, renderAll, dancing colors, dynamic lighting,
+              combat flash effects, tileset loader/mapper, drawEntity, updateSidePanel,
+              renderMinimap, updateLogPanel, log()
+ui.js         Alignment screen, flash messages, UI screens (inventory, god, spells, help),
+              character creation, input handling, companion chat, save/quit, debug, entry point
 ```
 
 ---

@@ -709,6 +709,7 @@ body::after {
         <div><span class="help-key">f</span><span class="help-desc">Fire ranged weapon</span></div>
         <div><span class="help-key">v</span><span class="help-desc">Throw weapon</span></div>
         <div><span class="help-key">x</span><span class="help-desc">Force-attack (direction)</span></div>
+        <div><span class="help-key">p</span><span class="help-desc">Lunge (reach weapons, 2-tile)</span></div>
       </div>
       <div>
         <h3>System</h3>
@@ -727,7 +728,7 @@ body::after {
     </div>
     <div style="margin-top:15px;padding-top:10px;border-top:1px solid var(--border);">
       <h3>Combat</h3>
-      <p style="font-size:13px;color:var(--white)">Move into enemies to attack. Fighting-Men deal more damage and can use ranged weapons effectively. Clerics can turn undead (T). Magic-Users cast powerful spells.</p>
+      <p style="font-size:13px;color:var(--white)">Move into enemies to attack. Weapon speed matters: fast weapons grant a bonus action, slow weapons cost a turn to recover. Reach weapons (spear, halberd) can lunge 2 tiles with P. Cleaving weapons hit a second target on kill.</p>
       <h3>Classes</h3>
       <p style="font-size:13px;color:var(--white)">Fighting-Man: Best combat, ranged mastery, can form ranks with companions for bonus damage.<br>
       Cleric: Heals, turns undead, divine spells, gains power from god worship.<br>
@@ -1018,7 +1019,7 @@ const CLASSES = {
     primeStat: 'wis',
     saveMod: { poison:2, magic:2, breath:0, death:3 },
     abilities: ['turn_undead','lay_on_hands','divine_smite','sanctuary'],
-    spells: ['cure_light','bless','hold_undead','flame_strike','word_of_recall'],
+    spells: ['cure_light','bless','cure_poison','sanctuary_spell','smite','hold_undead','flame_strike','word_of_recall'],
     weaponBonus: 0, armorTypes: ['all'],
     xpTable: [0,1500,3000,6000,12000,25000,50000,100000,200000,300000,400000,500000,600000,700000,800000,900000],
     flavorText: 'Your god grants you power. Try not to disappoint them.'
@@ -1030,7 +1031,7 @@ const CLASSES = {
     primeStat: 'int',
     saveMod: { poison:0, magic:3, breath:0, death:1 },
     abilities: ['arcane_surge','spell_memory','metamagic','identify_item'],
-    spells: ['magic_missile','sleep','burning_hands','ice_lance','lightning_bolt','fireball','polymorph','disintegrate'],
+    spells: ['magic_missile','detect_monsters','arcane_shield','sleep','burning_hands','haste','ice_lance','lightning_bolt','fireball','polymorph','disintegrate'],
     weaponBonus: 0, armorTypes: ['robes','cloth'],
     xpTable: [0,2500,5000,10000,20000,40000,80000,150000,300000,450000,600000,750000,900000,1050000,1200000,1350000],
     flavorText: 'The pen is mightier than the sword, unless the pen IS a fireball.'
@@ -1235,8 +1236,11 @@ const SPELL_DATA = {
   hold_undead: { name:'Hold Undead', mp:5, level:2, school:'divine', target:'single', desc:'Paralyze undead enemy.', effect:'paralyze', cls:['cleric'] },
   flame_strike: { name:'Flame Strike', mp:10, level:3, school:'divine', target:'single', desc:'Call divine fire. 5d8 damage.', effect:'damage', power:20, cls:['cleric'] },
   word_of_recall: { name:'Word of Recall', mp:15, level:4, school:'divine', target:'self', desc:'Teleport to dungeon entrance. Emergency escape.', effect:'recall', cls:['cleric'] },
+  cure_poison: { name:'Cure Poison', mp:4, level:1, school:'divine', target:'self', desc:'Remove poison from your body.', effect:'cure_poison', cls:['cleric'] },
+  sanctuary_spell: { name:'Sanctuary', mp:8, level:2, school:'divine', target:'self', desc:'Divine protection. 50% miss chance for 10 turns.', effect:'sanctuary_spell', cls:['cleric'] },
+  smite: { name:'Smite', mp:6, level:2, school:'divine', target:'single', desc:'Holy strike. 3d8 damage, +1d8 vs undead.', effect:'smite', power:8, cls:['cleric'] },
   // Magic-User
-  magic_missile: { name:'Magic Missile', mp:2, level:1, school:'arcane', target:'single', desc:'Unerring magical bolt. 1d6+level damage.', effect:'damage', power:4, cls:['magicuser'] },
+  magic_missile: { name:'Magic Missile', mp:2, level:1, school:'arcane', target:'single', desc:'Unerring magical bolts. Scales with level.', effect:'magic_missile', power:4, cls:['magicuser'] },
   sleep: { name:'Sleep', mp:4, level:1, school:'arcane', target:'area', desc:'Put nearby weak enemies to sleep.', effect:'sleep', cls:['magicuser'] },
   burning_hands: { name:'Burning Hands', mp:5, level:1, school:'arcane', target:'cone', desc:'Cone of fire. 3d6 damage.', effect:'damage', power:9, cls:['magicuser'] },
   ice_lance: { name:'Ice Lance', mp:6, level:2, school:'arcane', target:'line', desc:'Piercing shard of ice. 4d6 damage, slows.', effect:'damage', power:12, cls:['magicuser'] },
@@ -1244,6 +1248,9 @@ const SPELL_DATA = {
   fireball: { name:'Fireball', mp:14, level:3, school:'arcane', target:'area', desc:'Explosive ball of fire. 8d6 in radius.', effect:'damage', power:24, cls:['magicuser'] },
   polymorph: { name:'Polymorph Other', mp:20, level:4, school:'arcane', target:'single', desc:'Transform enemy into harmless creature.', effect:'polymorph', cls:['magicuser'] },
   disintegrate: { name:'Disintegrate', mp:30, level:6, school:'arcane', target:'single', desc:'Reduce target to dust. Instant kill on weak, massive damage on strong.', effect:'disintegrate', power:100, cls:['magicuser'] },
+  detect_monsters: { name:'Detect Monsters', mp:3, level:1, school:'arcane', target:'self', desc:'Sense all monsters on this floor for 20 turns.', effect:'detect_monsters', cls:['magicuser'] },
+  arcane_shield: { name:'Shield', mp:5, level:1, school:'arcane', target:'self', desc:'Magical barrier. +4 AC for 15 turns.', effect:'arcane_shield', cls:['magicuser'] },
+  haste: { name:'Haste', mp:8, level:2, school:'arcane', target:'self', desc:'Move at double speed. Act twice per turn for 8 turns.', effect:'haste', cls:['magicuser'] },
   // Fighting-man
   power_strike: { name:'Power Strike', mp:0, level:1, school:'martial', target:'single', desc:'Double damage melee strike (costs 2 turns).', effect:'power_strike', cls:['fightingman'], cost_turns:2 },
   steady_aim: { name:'Steady Aim', mp:0, level:1, school:'martial', target:'self', desc:'Next ranged attack is guaranteed critical hit.', effect:'steady_aim', cls:['fightingman'] },
@@ -1252,11 +1259,11 @@ const SPELL_DATA = {
 // ─── ITEMS ───────────────────────────────────────────────────
 const ITEM_TEMPLATES = {
   // Weapons
-  dagger: { name:'Dagger', glyph:')', color:'#aaa', type:'weapon', slot:'weapon', dmg:[1,4,0], twoHand:false, ranged:false, val:5, category:'dagger', speed:'fast' },
+  dagger: { name:'Dagger', glyph:')', color:'#aaa', type:'weapon', slot:'weapon', dmg:[1,4,0], twoHand:false, ranged:false, val:5, category:'dagger', speed:'fast', statusOnHit:'poison' },
   shortsword: { name:'Short Sword', glyph:')', color:'#ccc', type:'weapon', slot:'weapon', dmg:[1,6,0], val:15, category:'sword', speed:'normal' },
   longsword: { name:'Long Sword', glyph:')', color:'#ddd', type:'weapon', slot:'weapon', dmg:[1,8,0], val:40, category:'sword', speed:'normal' },
   greatsword: { name:'Greatsword', glyph:')', color:'#eee', type:'weapon', slot:'weapon', dmg:[2,6,0], twoHand:true, val:80, category:'sword', speed:'slow' },
-  mace: { name:'Mace', glyph:')', color:'#cc8844', type:'weapon', slot:'weapon', dmg:[1,6,1], bonusVsUndead:2, val:20, category:'mace', speed:'normal' },
+  mace: { name:'Mace', glyph:')', color:'#cc8844', type:'weapon', slot:'weapon', dmg:[1,6,1], bonusVsUndead:2, val:20, category:'mace', speed:'normal', statusOnHit:'slow' },
   waraxe: { name:'War Axe', glyph:')', color:'#cc6633', type:'weapon', slot:'weapon', dmg:[1,8,1], val:35, category:'axe', speed:'normal' },
   spear: { name:'Spear', glyph:'/', color:'#aa8855', type:'weapon', slot:'weapon', dmg:[1,6,2], reach:true, val:15, category:'polearm', speed:'normal' },
   shortbow: { name:'Short Bow', glyph:'(', color:'#aa7733', type:'weapon', slot:'weapon', dmg:[1,6,0], ranged:true, ammo:'arrows', val:30, category:'ranged', speed:'normal' },
@@ -1270,13 +1277,13 @@ const ITEM_TEMPLATES = {
   battleaxe: { name:'Battle Axe', glyph:')', color:'#cc7744', type:'weapon', slot:'weapon', category:'axe', speed:'slow', dmg:[1,10,1], cleave:true, twoHand:true, val:65 },
   halberd: { name:'Halberd', glyph:'/', color:'#997755', type:'weapon', slot:'weapon', category:'polearm', speed:'slow', dmg:[1,10,1], reach:true, cleave:true, twoHand:true, val:70 },
   morningstar: { name:'Morning Star', glyph:')', color:'#cc9966', type:'weapon', slot:'weapon', category:'flail', speed:'normal', dmg:[1,8,1], armorPierce:1, val:40 },
-  wand_fire: { name:'Wand of Fire', glyph:'/', color:'#ff4400', type:'wand', slot:'weapon', dmg:[4,6,0], ranged:true, charges:8, val:200, spellEffect:'fire' },
-  wand_cold: { name:'Wand of Cold', glyph:'/', color:'#44ccff', type:'wand', slot:'weapon', dmg:[3,6,2], ranged:true, charges:8, val:180, spellEffect:'cold' },
-  wand_lightning: { name:'Wand of Lightning', glyph:'/', color:'#ffff44', type:'wand', slot:'weapon', dmg:[3,8,0], ranged:true, charges:6, val:220, spellEffect:'lightning' },
-  wand_poison: { name:'Wand of Venom', glyph:'/', color:'#44cc00', type:'wand', slot:'weapon', dmg:[2,4,0], ranged:true, charges:10, val:120, spellEffect:'poison' },
-  wand_sleep: { name:'Wand of Sleep', glyph:'/', color:'#8866cc', type:'wand', slot:'weapon', dmg:[0,0,0], ranged:true, charges:8, val:150, spellEffect:'sleep' },
-  wand_digging: { name:'Wand of Digging', glyph:'/', color:'#aa8855', type:'wand', slot:'weapon', dmg:[0,0,0], ranged:false, charges:12, val:100, spellEffect:'dig' },
-  wand_polymorph: { name:'Wand of Polymorph', glyph:'/', color:'#ff88ff', type:'wand', slot:'weapon', dmg:[0,0,0], ranged:true, charges:5, val:250, spellEffect:'polymorph' },
+  wand_fire: { name:'Wand of Fire', glyph:'/', color:'#ff4400', type:'wand', slot:'weapon', dmg:[3,6,0], ranged:true, charges:5, val:200, spellEffect:'fire' },
+  wand_cold: { name:'Wand of Cold', glyph:'/', color:'#44ccff', type:'wand', slot:'weapon', dmg:[3,6,2], ranged:true, charges:5, val:180, spellEffect:'cold' },
+  wand_lightning: { name:'Wand of Lightning', glyph:'/', color:'#ffff44', type:'wand', slot:'weapon', dmg:[3,8,0], ranged:true, charges:4, val:220, spellEffect:'lightning' },
+  wand_poison: { name:'Wand of Venom', glyph:'/', color:'#44cc00', type:'wand', slot:'weapon', dmg:[2,4,0], ranged:true, charges:7, val:120, spellEffect:'poison' },
+  wand_sleep: { name:'Wand of Sleep', glyph:'/', color:'#8866cc', type:'wand', slot:'weapon', dmg:[0,0,0], ranged:true, charges:5, val:150, spellEffect:'sleep' },
+  wand_digging: { name:'Wand of Digging', glyph:'/', color:'#aa8855', type:'wand', slot:'weapon', dmg:[0,0,0], ranged:false, charges:8, val:100, spellEffect:'dig' },
+  wand_polymorph: { name:'Wand of Polymorph', glyph:'/', color:'#ff88ff', type:'wand', slot:'weapon', dmg:[0,0,0], ranged:true, charges:4, val:250, spellEffect:'polymorph' },
   // Armor
   leather: { name:'Leather Armor', glyph:'[', color:'#aa7744', type:'armor', slot:'body', ac:2, val:10 },
   chainmail: { name:'Chain Mail', glyph:'[', color:'#aaaaaa', type:'armor', slot:'body', ac:5, val:75 },
@@ -1321,6 +1328,8 @@ const ITEM_TEMPLATES = {
   potion_berserk: { name:'Potion of Berserk Rage', glyph:'!', color:'#ff2222', type:'potion', effect:'berserk', duration:10, val:10 },
   potion_resist: { name:'Potion of Resistance', glyph:'!', color:'#aaaaff', type:'potion', effect:'magic_resist', duration:25, val:40 },
   potion_clarity: { name:'Potion of Clarity', glyph:'!', color:'#ffffff', type:'potion', effect:'clarity', val:50 },
+  potion_antidote: { name:'Potion of Antidote', glyph:'!', color:'#44ff88', type:'potion', effect:'antidote', val:30 },
+  potion_restoration: { name:'Potion of Restoration', glyph:'!', color:'#ffddaa', type:'potion', effect:'restoration', val:45 },
   potion_might: { name:'Potion of Might', glyph:'!', color:'#ffaa44', type:'potion', effect:'temp_might', power:2, duration:20, val:45 },
   // Scrolls
   scroll_tele: { name:'Scroll of Teleportation', glyph:'?', color:'#ffcc44', type:'scroll', effect:'teleport', val:20 },
@@ -1348,6 +1357,26 @@ const ITEM_TEMPLATES = {
   throwing_star: { name:'Throwing Stars', glyph:'*', color:'#ccccdd', type:'thrown', dmg:[1,3,0], count:8, range:6, val:5 },
   // Special/magic
   rune_of_baal: { name:'⛧ Rune of Baal ⛧', glyph:'§', color:'#ffd700', type:'quest_item', val:0, unique:true },
+};
+
+// ─── UNIQUE ITEMS ─────────────────────────────────────────────
+const UNIQUE_ITEMS = {
+  frostbrand: { name:'Frostbrand', glyph:')', color:'#44ddff', type:'weapon', slot:'weapon', dmg:[1,8,2], category:'sword', speed:'normal', val:500, minFloor:6,
+    unique:true, slowOnHit:true, coldDamage:true, selfBurn:1, desc:'A blade of living ice. Slows enemies on hit, but its chill seeps into the wielder.' },
+  sword_of_kas: { name:'Sword of Kas', glyph:')', color:'#cc00ff', type:'weapon', slot:'weapon', dmg:[2,8,3], category:'sword', speed:'normal', critBonus:3, val:800, minFloor:10,
+    unique:true, hpDrainOnKill:1, desc:'A legendary blade of terrible power. Crits easily, but drinks the life of its wielder with every kill.' },
+  staff_of_magi: { name:'Staff of the Magi', glyph:'/', color:'#ffdd88', type:'weapon', slot:'weapon', dmg:[1,6,0], category:'staff', speed:'normal', magic:true, val:700, minFloor:9,
+    unique:true, spellPowerBonus:5, mpBonus:20, noStrBonus:true, desc:'The supreme implement of arcane might. Amplifies all spells, but offers no physical power.' },
+  aegis_shield: { name:'Aegis Shield', glyph:'[', color:'#dddd44', type:'armor', slot:'offhand', ac:5, val:600, minFloor:7,
+    unique:true, reflectDamage:0.25, dexPenalty:2, desc:'An ancient shield of divine make. Reflects damage back at attackers, but its weight slows the hand.' },
+  boots_of_zephyr: { name:'Boots of the Zephyr', glyph:'[', color:'#88ffcc', type:'armor', slot:'boots', ac:1, val:500, minFloor:8,
+    unique:true, speedBonus:true, alwaysFast:true, desc:'Boots woven from wind itself. The wearer moves with supernatural speed.' },
+  crown_of_madness: { name:'Crown of Madness', glyph:'[', color:'#ff44ff', type:'armor', slot:'head', ac:1, val:600, minFloor:11,
+    unique:true, intBonus:3, wisBonus:3, confusionChance:0.1, desc:'A circlet of eldritch metal. Grants terrible insight at the cost of sanity.' },
+  vampiric_blade: { name:'Vampiric Blade', glyph:')', color:'#990033', type:'weapon', slot:'weapon', dmg:[1,6,1], category:'sword', speed:'fast', val:550, minFloor:8,
+    unique:true, lifestealPct:0.25, pietyDrain:10, desc:'A cursed blade that drinks the blood of the slain. Gods look away from its wielder.' },
+  ring_of_berserker: { name:'Ring of the Berserker', glyph:'=', color:'#ff5500', type:'ring', slot:'ring', val:400, minFloor:5,
+    unique:true, strBonus:4, autoRetaliate:true, noSpells:true, templateKey:'ring_berserker', desc:'A band of dull iron that burns with rage. Grants enormous strength but silences all magic.' },
 };
 
 // ─── MONSTERS ─────────────────────────────────────────────────
@@ -1676,7 +1705,104 @@ function generateLevel(floor) {
       tiles[ly][lx] = floor >= 10 && rng.bool(0.3) ? TILE.LAVA : TILE.WATER;
     }
   }
-  
+
+  // Floor theme terrain
+  const theme = getFloorTheme(floor);
+  if(theme.extraWater) {
+    for(let i=0; i<rng.int(5, 15); i++) {
+      const r = rng.pick(rooms.slice(1, -1));
+      const wx = rng.int(r.x+1, r.x+r.w-2);
+      const wy = rng.int(r.y+1, r.y+r.h-2);
+      if(tiles[wy][wx] === TILE.FLOOR) tiles[wy][wx] = TILE.WATER;
+    }
+  }
+  if(theme.extraLava) {
+    for(let i=0; i<rng.int(5, 12); i++) {
+      const r = rng.pick(rooms.slice(1, -1));
+      const lx = rng.int(r.x+1, r.x+r.w-2);
+      const ly = rng.int(r.y+1, r.y+r.h-2);
+      if(tiles[ly][lx] === TILE.FLOOR) tiles[ly][lx] = TILE.LAVA;
+    }
+  }
+  if(theme.extraTraps) {
+    for(let i=0; i<rng.int(3, 6); i++) {
+      const r = rng.pick(rooms.slice(1, -1));
+      const tx = rng.int(r.x+1, r.x+r.w-2);
+      const ty = rng.int(r.y+1, r.y+r.h-2);
+      if(tiles[ty][tx] === TILE.FLOOR) tiles[ty][tx] = TILE.TRAP;
+    }
+  }
+
+  // Special rooms (1-2 per floor from middle rooms)
+  if(rooms.length >= 5) {
+    const midRooms = rooms.slice(2, -1);
+    const numSpecial = rng.int(1, Math.min(2, midRooms.length));
+    const specialTypes = ['armory','library','vault','crypt_chamber'];
+    for(let s=0; s<numSpecial; s++) {
+      const sRoom = rng.pick(midRooms);
+      const sType = rng.pick(specialTypes);
+      const [cx, cy] = sRoom.center();
+      switch(sType) {
+        case 'armory':
+          for(let a=0; a<rng.int(2,4); a++) {
+            const ai = generateItem(Math.min(16, floor+2));
+            if(ai.type === 'weapon' || ai.type === 'armor') {
+              ai.x = rng.int(sRoom.x+1, sRoom.x+sRoom.w-2);
+              ai.y = rng.int(sRoom.y+1, sRoom.y+sRoom.h-2);
+              items.push(ai);
+            }
+          }
+          // Guard monsters
+          for(let g=0; g<rng.int(1,2); g++) {
+            if(eligibleMonsters.length > 0) {
+              const [mk, mv] = rng.pick(eligibleMonsters);
+              const gm = createMonster(mk, mv, cx+g, cy, floor);
+              gm.hp = Math.floor(gm.hp * 1.3);
+              gm.maxHp = Math.floor(gm.maxHp * 1.3);
+              monsters.push(gm);
+            }
+          }
+          break;
+        case 'library':
+          for(let l=0; l<rng.int(2,3); l++) {
+            const si = { ...ITEM_TEMPLATES[rng.pick(['scroll_tele','scroll_id','scroll_mapping','scroll_enchant_wpn','scroll_enchant_arm','scroll_acquirement'])], id:`item_${Date.now()}_${rng.int(0,9999)}` };
+            si.x = rng.int(sRoom.x+1, sRoom.x+sRoom.w-2);
+            si.y = rng.int(sRoom.y+1, sRoom.y+sRoom.h-2);
+            items.push(si);
+          }
+          break;
+        case 'vault':
+          for(let v=0; v<rng.int(3,5); v++) {
+            items.push({ type:'gold', glyph:'$', color:'#ffcc00', amount:rng.int(floor*10, floor*40), x:rng.int(sRoom.x+1,sRoom.x+sRoom.w-2), y:rng.int(sRoom.y+1,sRoom.y+sRoom.h-2) });
+          }
+          const vaultItem = generateItem(Math.min(16, floor+3));
+          vaultItem.x = cx; vaultItem.y = cy;
+          items.push(vaultItem);
+          // Trap the vault
+          if(tiles[cy-1]?.[cx] === TILE.FLOOR) tiles[cy-1][cx] = TILE.TRAP;
+          if(tiles[cy+1]?.[cx] === TILE.FLOOR) tiles[cy+1][cx] = TILE.TRAP;
+          break;
+        case 'crypt_chamber':
+          for(let u=0; u<rng.int(3,5); u++) {
+            const undeadTypes = Object.entries(MONSTER_TEMPLATES).filter(([k,v]) => v.undead && v.floor[0] <= floor && v.floor[1] >= floor);
+            if(undeadTypes.length > 0) {
+              const [uk, uv] = rng.pick(undeadTypes);
+              const ux = rng.int(sRoom.x+1, sRoom.x+sRoom.w-2);
+              const uy = rng.int(sRoom.y+1, sRoom.y+sRoom.h-2);
+              if(!monsters.some(m => m.x===ux && m.y===uy)) {
+                monsters.push(createMonster(uk, uv, ux, uy, floor));
+              }
+            }
+          }
+          // Guaranteed ring or amulet
+          const accItem = generateItem(floor);
+          accItem.x = cx; accItem.y = cy;
+          items.push(accItem);
+          break;
+      }
+    }
+  }
+
   // Place items
   for(let i=1; i<rooms.length; i++) {
     const r = rooms[i];
@@ -1707,9 +1833,18 @@ function generateLevel(floor) {
   // Place monsters — during ascent, use deeper monster pool and spawn more
   const isAscending = G.ascending;
   const monsterFloor = isAscending ? Math.min(16, floor + Math.floor((16 - floor) * 0.5)) : floor;
-  const eligibleMonsters = Object.entries(MONSTER_TEMPLATES).filter(([k, v]) => {
+  let eligibleMonsters = Object.entries(MONSTER_TEMPLATES).filter(([k, v]) => {
     return !v.unique && v.floor[0] <= monsterFloor && v.floor[1] >= floor;
   });
+  // Theme monster bias: double the weight of themed monsters
+  if(theme.undeadBoost) {
+    const undead = eligibleMonsters.filter(([k, v]) => v.undead);
+    eligibleMonsters = eligibleMonsters.concat(undead, undead); // 3x weight
+  }
+  if(theme.demonBoost) {
+    const demons = eligibleMonsters.filter(([k, v]) => v.faction === 'chaotic');
+    eligibleMonsters = eligibleMonsters.concat(demons, demons);
+  }
 
   for(let i=1; i<rooms.length; i++) {
     const r = rooms[i];
@@ -1797,12 +1932,26 @@ function createMonster(key, template, x, y, floor, isBoss=false) {
 }
 
 function generateItem(floor) {
+  // Chance to spawn a unique item (3% base, scales with floor)
+  if(!G.foundUniques) G.foundUniques = new Set();
+  const uniqueChance = 0.02 + floor * 0.005;
+  if(rng.bool(uniqueChance)) {
+    const eligible = Object.entries(UNIQUE_ITEMS).filter(([k, v]) => floor >= v.minFloor && !G.foundUniques.has(k));
+    if(eligible.length > 0) {
+      const [key, template] = rng.pick(eligible);
+      G.foundUniques.add(key);
+      const item = { ...template, id: `unique_${key}_${Date.now()}`, uniqueKey: key };
+      if(item.type === 'ring') item.templateKey = key;
+      return item;
+    }
+  }
+
   const roll = rng.next();
   let pool;
   if(roll < 0.25) pool = ['ration','bread','meat','fruit'];
   else if(roll < 0.40) {
     pool = ['potion_heal','potion_mana','potion_str','potion_speed','potion_invis','potion_conf','potion_poison','potion_xp',
-            'potion_blind','potion_weakness','potion_clarity','potion_might','potion_resist'];
+            'potion_blind','potion_weakness','potion_clarity','potion_might','potion_resist','potion_antidote','potion_restoration'];
     if(floor >= 4) pool.push('potion_mutagen','potion_paralyze','potion_amnesia','potion_fire','potion_berserk');
     if(floor >= 6) pool.push('potion_phasing');
   }
@@ -1815,8 +1964,9 @@ function generateItem(floor) {
     // Equipment — weighted by floor
     const wpnPool = ['dagger','shortsword','longsword','mace','waraxe','shortbow','sling','flail','morningstar'];
     if(floor >= 4) wpnPool.push('greatsword','crossbow','longbow','spear','falchion','battleaxe');
-    if(floor >= 7) wpnPool.push('staff','wand_fire','wand_cold','wand_lightning','warhammer','halberd');
-    if(floor >= 10) wpnPool.push('wand_poison','wand_sleep','wand_digging','wand_polymorph');
+    if(floor >= 7) wpnPool.push('staff','warhammer','halberd');
+    if(floor >= 9) wpnPool.push('wand_fire','wand_cold','wand_lightning');
+    if(floor >= 11) wpnPool.push('wand_poison','wand_sleep','wand_digging','wand_polymorph');
     const armPool = ['leather','shield'];
     if(floor >= 3) armPool.push('chainmail','helmet','large_shield');
     if(floor >= 6) armPool.push('platemail','cap_int','cloak_prot','boots_speed','boots_elvenkind');
@@ -2055,7 +2205,9 @@ function startNewGame(race, cls, name) {
     alignmentOpen: false,
     debugOpen: false,
     attackMode: false,
+    reachMode: false,
     ascending: false,   // true once Rune is picked up — player must escape to surface
+    foundUniques: new Set(),
   };
 
   G.level = generateLevel(G.floor);
@@ -2079,6 +2231,9 @@ function computeFOV() {
   // Mutation: extra eyes
   const eyeMut = player.mutations?.find(m => m.key === 'extra_eyes');
   if(eyeMut) radius += eyeMut.visBonus || 0;
+  // Floor theme FOV reduction (crypt darkness)
+  const fovTheme = getFloorTheme(G.floor);
+  if(fovTheme.fovReduction) radius -= fovTheme.fovReduction;
   // Blindness overrides — can only see adjacent tiles
   if(player.status.blinded > 0) radius = 1;
   
@@ -2107,6 +2262,11 @@ function computeFOV() {
     }
   }
   
+  // Detect Monsters spell — add all monster tiles to visible set
+  if(player.status.detect_monsters > 0) {
+    for(const m of level.monsters) level.visible.add(`${m.x},${m.y}`);
+  }
+
   // Notify on newly visible monsters
   if(G.seenMonsters) {
     for(const m of level.monsters) {
@@ -2150,6 +2310,32 @@ const TILE_COLORS = {
   [TILE.SHOP]:       { ch:'¥', fg:'#dd44ff', bg:'#0a0a14' },
   [TILE.TRAP]:       { ch:'^', fg:'#996600', bg:'#0a0a14' },
 };
+
+const FLOOR_THEMES = {
+  dungeon:  { name:'Dungeon',       floors:[1,3],  wall:'#5566aa', floor:'#3a3a5c', corridor:'#303050', bg:'#0d0d18' },
+  caves:    { name:'Flooded Caves',  floors:[4,6],  wall:'#447788', floor:'#2a4455', corridor:'#1a3344', bg:'#0a1520', extraWater:true },
+  crypt:    { name:'Crypt',          floors:[7,9],  wall:'#777788', floor:'#3a3a44', corridor:'#2a2a33', bg:'#0d0d10', fovReduction:1, undeadBoost:true },
+  forge:    { name:'Forge',          floors:[10,12],wall:'#aa5533', floor:'#4a2a1a', corridor:'#3a2010', bg:'#180a05', extraLava:true },
+  abyss:    { name:'Abyss',          floors:[13,15],wall:'#7744aa', floor:'#2a1a3a', corridor:'#1a1030', bg:'#0d0818', demonBoost:true, extraTraps:true },
+  throne:   { name:'Baal\'s Throne', floors:[16,16],wall:'#aa8833', floor:'#3a2a1a', corridor:'#2a1a10', bg:'#181005' },
+};
+
+function getFloorTheme(floor) {
+  for(const theme of Object.values(FLOOR_THEMES)) {
+    if(floor >= theme.floors[0] && floor <= theme.floors[1]) return theme;
+  }
+  return FLOOR_THEMES.dungeon;
+}
+
+function getThemedTileColors(floor) {
+  const theme = getFloorTheme(floor);
+  return {
+    ...TILE_COLORS,
+    [TILE.WALL]:     { ch:'#', fg:theme.wall, bg:theme.bg },
+    [TILE.FLOOR]:    { ch:'.', fg:theme.floor, bg:'#0a0a14' },
+    [TILE.CORRIDOR]: { ch:'.', fg:theme.corridor, bg:'#0a0a14' },
+  };
+}
 
 let canvas, ctx;
 
@@ -2203,7 +2389,8 @@ function renderAll() {
       if(!explored && !visible) continue;
       
       const tile = level.tiles[my][mx];
-      const tileInfo = TILE_COLORS[tile] || TILE_COLORS[TILE.WALL];
+      const themedColors = getThemedTileColors(G.floor);
+      const tileInfo = themedColors[tile] || themedColors[TILE.WALL];
       
       const px = col * CELL_SIZE;
       const py = row * CELL_SIZE;
@@ -2325,8 +2512,18 @@ function updateSidePanel() {
   for(const [id, slot] of Object.entries(slotMap)) {
     const el = document.getElementById(id);
     const item = p.equipped[slot];
-    el.textContent = item ? item.name : '—';
-    el.style.color = item ? (item.cursed ? '#ff3333' : '#00ccff') : '#555566';
+    if(item) {
+      let label = item.name;
+      if(slot === 'weapon' && item.speed === 'fast') label += ' [fast]';
+      if(slot === 'weapon' && item.speed === 'slow') label += ' [slow]';
+      if(slot === 'weapon' && item.reach) label += ' [reach]';
+      if(slot === 'weapon' && item.cleave) label += ' [cleave]';
+      el.textContent = label;
+      el.style.color = item.cursed ? '#ff3333' : '#00ccff';
+    } else {
+      el.textContent = '—';
+      el.style.color = '#555566';
+    }
   }
   
   // God display
@@ -2354,9 +2551,11 @@ function updateSidePanel() {
   if(p.companions.length === 0) {
     compEl.innerHTML = '<span style="color:var(--gray)">None</span>';
   } else {
-    compEl.innerHTML = p.companions.map(c => 
-      `<div class="companion-entry"><span class="companion-name">${c.name}</span> <span class="companion-hp">${c.hp}/${c.maxHp}</span></div>`
-    ).join('');
+    compEl.innerHTML = p.companions.map(c => {
+      const lvl = c.compLevel || 1;
+      const wpnName = c.equippedWeapon ? ` [${c.equippedWeapon.name}]` : '';
+      return `<div class="companion-entry"><span class="companion-name">${c.name}</span> <span style="color:var(--gray)">L${lvl}</span> <span class="companion-hp">${c.hp}/${c.maxHp}</span>${wpnName}</div>`;
+    }).join('');
   }
   
   // Monster panel (DCSS style)
@@ -2556,6 +2755,7 @@ function computeAC(player) {
   if(player.passives.includes('natural_armor')) ac += 3;
   if(player.status.bless) ac += 2;
   if(player.status.sanctuary) ac += 5;
+  if(player.status.arcane_shield) ac += 4;
   if(player.status.corroded) ac -= (player.status.corroded_amount || 2);
   
   // Mutation AC bonuses
@@ -2582,10 +2782,10 @@ function getAttackBonus(player) {
 }
 
 function getDamageBonus(player) {
-  let bonus = Math.floor((player.stats.str - 10) / 2);
+  const wpn = player.equipped.weapon;
+  let bonus = wpn?.noStrBonus ? 0 : Math.floor((player.stats.str - 10) / 2);
   if(player.cls === 'fightingman') bonus += Math.floor(player.level / 3);
   if(player.rageActive) bonus += 3;
-  const wpn = player.equipped.weapon;
   if(wpn && wpn.enchant) bonus += wpn.enchant;
   return bonus;
 }
@@ -2647,9 +2847,18 @@ function levelUp(player) {
 function tryMove(dx, dy) {
   G._lastMoveDir = [dx, dy];
   const { player, level } = G;
+
+  // Weapon speed debt: slow weapons cost a turn after attacking
+  if(player.status.speed_debt > 0) {
+    delete player.status.speed_debt;
+    log('You recover from your heavy swing.', 'info');
+    endTurn();
+    return true;
+  }
+
   const nx = player.x + dx;
   const ny = player.y + dy;
-  
+
   if(nx < 0 || nx >= MAP_W || ny < 0 || ny >= MAP_H) return false;
   
   // Check for monster
@@ -3015,6 +3224,31 @@ window.closePickupModal = closePickupModal;
 
 // ─── COMBAT ──────────────────────────────────────────────────
 
+function reachAttack(dx, dy) {
+  const { player, level } = G;
+  const wpn = player.equipped.weapon;
+  if(!wpn?.reach) {
+    log('You need a reach weapon (spear, halberd) to lunge.', 'warning');
+    return;
+  }
+  // Target is 2 tiles away in the chosen direction
+  const tx = player.x + dx * 2;
+  const ty = player.y + dy * 2;
+  if(tx < 0 || tx >= MAP_W || ty < 0 || ty >= MAP_H) { log('Nothing there.', 'info'); return; }
+  // Check there's no wall blocking the path
+  const midX = player.x + dx, midY = player.y + dy;
+  if(level.tiles[midY]?.[midX] === TILE.WALL) { log('A wall blocks your lunge.', 'info'); return; }
+  const monster = level.monsters.find(m => m.x === tx && m.y === ty);
+  if(monster) {
+    if(monster.neutral) { monster.neutral = false; monster.provoked = true; }
+    log(`You lunge with your ${wpn.name}!`, 'combat');
+    attackMonster(monster);
+    endTurn();
+  } else {
+    log('Your lunge finds no target.', 'info');
+  }
+}
+
 function forceAttack(dx, dy) {
   const { player, level } = G;
   const nx = player.x + dx;
@@ -3129,7 +3363,37 @@ function attackMonster(monster) {
     
     gainPiety('kills', 0.5);
     gainPiety('honorable_combat', 0.3);
-    
+
+    // Unique weapon effects
+    if(wpn?.coldDamage) {
+      const cold = rng.dice(1, 4, 0);
+      monster.hp -= cold;
+      log(`Frost crackles for ${cold} additional cold damage!`, 'combat');
+    }
+    if(wpn?.slowOnHit && !monster.slowed) {
+      monster.slowed = 5;
+      monster.speed = (monster.speed || 1) * 0.5;
+    }
+    // Player-inflicted status via weapon
+    if(wpn?.statusOnHit && rng.bool(0.2)) {
+      if(wpn.statusOnHit === 'poison' && !monster.statusImmune) {
+        monster.poisoned = rng.int(3, 6);
+        log(`Your ${wpn.name} poisons ${monster.name}!`, 'combat');
+      }
+      if(wpn.statusOnHit === 'slow' && !monster.slowed) {
+        monster.slowed = 5;
+        monster.speed = (monster.speed || 1) * 0.5;
+        log(`Your ${wpn.name} staggers ${monster.name}!`, 'combat');
+      }
+    }
+    if(wpn?.lifestealPct && dmg > 0) {
+      const lheal = Math.max(1, Math.floor(dmg * wpn.lifestealPct));
+      p.hp = Math.min(p.maxHp, p.hp + lheal);
+    }
+    if(wpn?.spellPowerBonus && p.status.spell_power_boost === undefined) {
+      // Staff of the Magi passive: tracked via weapon, applied in castSpell
+    }
+
     // Status effects from weapon
     if(p.status.sekhmet_frenzy && monster.hp <= 0) {
       const heal = rng.int(2, 6);
@@ -3138,10 +3402,35 @@ function attackMonster(monster) {
     }
     
     if(monster.hp <= 0) {
+      // Sword of Kas: drains HP on kill
+      if(wpn?.hpDrainOnKill) {
+        p.hp -= wpn.hpDrainOnKill;
+        if(p.hp <= 0) { die('the Sword of Kas'); return; }
+      }
       killMonster(monster);
+      // Cleave: if weapon has cleave and we killed the target, hit an adjacent enemy for half damage
+      if(wpn?.cleave) {
+        const adj = G.level.monsters.find(m => m.hp > 0 && Math.abs(m.x - p.x) <= 1 && Math.abs(m.y - p.y) <= 1);
+        if(adj) {
+          const cleaveDmg = Math.max(1, Math.floor(dmg / 2));
+          adj.hp -= cleaveDmg;
+          log(`Your ${wpn.name} cleaves into ${adj.name} for ${cleaveDmg}!`, 'combat');
+          if(adj.hp <= 0) killMonster(adj);
+        }
+      }
     }
   } else {
     log(`You miss ${monster.name}.`, 'combat');
+  }
+
+  // Weapon speed: slow weapons incur a speed debt (skip next turn)
+  const hasAlwaysFast = p.equipped.boots?.alwaysFast;
+  if(wpn?.speed === 'slow' && !hasAlwaysFast) {
+    p.status.speed_debt = 1;
+  }
+  // Fast weapons (or Boots of the Zephyr) grant a bonus action
+  if(wpn?.speed === 'fast' || hasAlwaysFast) {
+    p._bonusAction = true;
   }
 }
 
@@ -3187,7 +3476,7 @@ function monsterAttack(monster) {
         p.status.paralyzed = rng.int(3, 8);
         log('You are paralyzed!', 'warning');
       }
-      if(monster.statusAtk === 'poison' && !p.passives.includes('poison_resist') && rng.bool(0.3)) {
+      if(monster.statusAtk === 'poison' && !p.passives.includes('poison_resist') && !p.status.poison_resist && rng.bool(0.3)) {
         p.status.poisoned = rng.int(5, 15);
         log('You are poisoned!', 'warning');
       }
@@ -3223,7 +3512,24 @@ function monsterAttack(monster) {
       
       if(p.hp <= 0) { die(monster.name); return; }
       gainPiety('taking_damage', 1);
-      
+
+      // Aegis Shield reflect
+      if(p.equipped.offhand?.reflectDamage && dmg > 0) {
+        const reflected = Math.max(1, Math.floor(dmg * p.equipped.offhand.reflectDamage));
+        monster.hp -= reflected;
+        log(`The Aegis reflects ${reflected} damage back at ${monster.name}!`, 'combat');
+        if(monster.hp <= 0) { killMonster(monster); return; }
+      }
+      // Ring of the Berserker auto-retaliate
+      const retal = [p.equipped.ring1, p.equipped.ring2].find(r => r?.autoRetaliate);
+      if(retal && Math.abs(monster.x - p.x) <= 1 && Math.abs(monster.y - p.y) <= 1) {
+        const [rdn, rdd, rdb] = getWeaponDamage(p);
+        const rdmg = Math.max(1, rng.dice(rdn, rdd, getDamageBonus(p) + rdb));
+        monster.hp -= rdmg;
+        log(`The ring burns with rage — you retaliate for ${rdmg}!`, 'combat');
+        if(monster.hp <= 0) { killMonster(monster); return; }
+      }
+
       // Mutation chance from certain monsters
       if(monster.statusAtk || monster.drainLife || monster.gaze || monster.breathWeapon) {
         if(rng.bool(0.04)) tryGrantMutation('monster_attack');
@@ -3257,6 +3563,23 @@ function killMonster(monster) {
   gainXP(monster.xp);
   gainPiety('kills', 2);
   gainPiety('killing_evil', monster.undead ? 3 : 1);
+
+  // Companion XP sharing — nearby companions gain XP
+  for(const comp of p.companions) {
+    const dist = Math.abs(comp.x - monster.x) + Math.abs(comp.y - monster.y);
+    if(dist <= 5) {
+      comp.xp = (comp.xp || 0) + monster.xp;
+      const compLevelThresholds = [50, 150, 400, 1000, 2500, 5000];
+      const compLevel = comp.compLevel || 1;
+      if(compLevel <= compLevelThresholds.length && comp.xp >= compLevelThresholds[compLevel - 1]) {
+        comp.compLevel = (comp.compLevel || 1) + 1;
+        comp.maxHp = (comp.maxHp || comp.hp) + 5;
+        comp.hp += 5;
+        comp.atk[0][2] += 1; // +1 damage bonus
+        log(`${comp.name} grows stronger! (Level ${comp.compLevel})`, 'good');
+      }
+    }
+  }
 
   // Alignment shifts from faction kills
   if(monster.faction === 'lawful') shiftAlignment(-3, 'slaying a lawful creature');
@@ -4126,7 +4449,22 @@ function endTurn() {
   }
   
   // Status effect countdown
+  const skipCountdown = new Set(['speed_debt','temp_str_amount','corroded_amount','berserk_dmg','weakened_amount','might_amount','poison_resist']);
+
+  // CON saving throw: chance to shake off negative statuses early (18+ on d20 + CON mod)
+  const conMod = Math.floor((p.stats.con - 10) / 2);
+  const negStatuses = ['poisoned','confused','paralyzed','blinded','weakened','slowed','burning','corroded'];
+  for(const ns of negStatuses) {
+    if(p.status[ns] > 1 && rng.dice(1, 20, conMod) >= 18) {
+      delete p.status[ns];
+      if(ns === 'weakened') { p.stats.str += (p.status.weakened_amount||4); delete p.status.weakened_amount; }
+      if(ns === 'corroded') delete p.status.corroded_amount;
+      if(ns === 'blinded') computeFOV();
+      log(`Your constitution overcomes the ${ns} effect!`, 'good');
+    }
+  }
   for(const [status, val] of Object.entries(p.status)) {
+    if(skipCountdown.has(status)) continue;
     if(typeof val === 'number' && val > 0) {
       p.status[status]--;
       if(p.status[status] <= 0) {
@@ -4157,6 +4495,10 @@ function endTurn() {
           delete p.status.might_amount;
           log('The surge of might fades.', 'info');
         }
+        if(status === 'arcane_shield') log('Your magical shield dissipates.', 'info');
+        if(status === 'detect_monsters') log('Your heightened senses fade.', 'info');
+        if(status === 'haste') log('Time resumes its normal flow.', 'info');
+        if(status === 'sanctuary') log('The divine ward fades.', 'info');
       }
     }
   }
@@ -4171,6 +4513,19 @@ function endTurn() {
     zagyRandomEvent();
   }
   
+  // Unique item effects per turn
+  if(p.equipped.weapon?.selfBurn) {
+    p.hp -= p.equipped.weapon.selfBurn;
+    if(G.turn % 10 === 0) log('The Frostbrand\'s chill seeps into your bones.', 'warning');
+    if(p.hp <= 0) { die('the Frostbrand\'s chill'); return; }
+  }
+  if(p.equipped.head?.confusionChance && rng.bool(p.equipped.head.confusionChance)) {
+    if(!p.status.confused) {
+      p.status.confused = 2;
+      log('The Crown of Madness floods your mind with visions!', 'warning');
+    }
+  }
+
   // Mutation effects
   applyMutationEffects();
   
@@ -4181,6 +4536,18 @@ function endTurn() {
     G.noiseTimer = 0;
   }
   
+  // Bonus action: weapon speed (fast) or haste spell — skip monster update
+  if(p._bonusAction) {
+    delete p._bonusAction;
+    computeFOV();
+    renderAll();
+    return; // Player acts again before monsters move
+  }
+  // Haste: every other turn, grant a bonus action
+  if(p.status.haste > 0 && G.turn % 2 === 0) {
+    p._bonusAction = true;
+  }
+
   // Update monsters
   updateMonsters();
   
@@ -4374,7 +4741,13 @@ function castSpell(spellKey) {
   const p = G.player;
   const spell = SPELL_DATA[spellKey];
   if(!spell) return;
-  
+
+  // Ring of the Berserker blocks spellcasting
+  if([p.equipped.ring1, p.equipped.ring2].some(r => r?.noSpells) && spell.mp > 0) {
+    log('The Ring of the Berserker burns with fury — you cannot cast spells!', 'warning');
+    return;
+  }
+
   if(spell.mp > 0 && p.mp < spell.mp) {
     log('Not enough mana!', 'warning');
     return;
@@ -4406,7 +4779,12 @@ function castSpell(spellKey) {
       const nearest = getNearestMonster();
       if(!nearest) { log('No target!', 'warning'); p.mp += spell.mp; return; }
       let dmg = rng.dice(spell.power/3|0 || 2, 6, p.stats.int - 10);
+      // INT scaling: high INT gives a multiplier (14 INT = +10%, 18 INT = +20%)
+      const intScale = 1 + Math.max(0, (p.stats.int - 12)) * 0.05;
+      dmg = Math.floor(dmg * intScale);
       if(p.passives.includes('magic_affinity')) dmg = Math.floor(dmg * 1.2);
+      if(p.status.spell_power_boost) dmg += 3;
+      if(p.equipped.weapon?.spellPowerBonus) dmg += p.equipped.weapon.spellPowerBonus;
       nearest.hp -= dmg;
       log(`Your ${spell.name} hits ${nearest.name} for ${dmg} damage!`, 'combat');
       gainPiety('killing_with_magic', 1);
@@ -4464,6 +4842,56 @@ function castSpell(spellKey) {
       p.steadyAim = true;
       log('You take careful aim. Next ranged attack is a guaranteed critical hit.', 'info');
       break;
+    case 'cure_poison':
+      if(p.status.poisoned) {
+        delete p.status.poisoned;
+        log('The poison is purged from your body!', 'good');
+      } else {
+        log('You are not poisoned.', 'info');
+        p.mp += spell.mp; // refund
+      }
+      break;
+    case 'sanctuary_spell':
+      p.status.sanctuary = 10;
+      log('A divine ward surrounds you! Enemies struggle to strike you.', 'good');
+      break;
+    case 'smite': {
+      const starget = getNearestMonster();
+      if(!starget) { log('No target!', 'warning'); p.mp += spell.mp; return; }
+      let sdmg = rng.dice(3, 8, p.stats.wis - 10);
+      if(starget.undead) sdmg += rng.dice(1, 8, 0);
+      if(p.passives.includes('magic_affinity')) sdmg = Math.floor(sdmg * 1.2);
+      starget.hp -= sdmg;
+      log(`Holy fire smites ${starget.name} for ${sdmg} damage!${starget.undead ? ' The undead burns!' : ''}`, 'combat');
+      if(starget.hp <= 0) killMonster(starget);
+      break;
+    }
+    case 'detect_monsters':
+      p.status.detect_monsters = 20;
+      log('Your senses expand. You feel the presence of all creatures on this floor.', 'good');
+      break;
+    case 'arcane_shield':
+      p.status.arcane_shield = 15;
+      log('A shimmering magical barrier surrounds you! +4 AC.', 'good');
+      break;
+    case 'haste':
+      p.status.haste = 8;
+      log('Time slows around you. You move with supernatural speed!', 'good');
+      break;
+    case 'magic_missile': {
+      const mmTarget = getNearestMonster();
+      if(!mmTarget) { log('No target!', 'warning'); p.mp += spell.mp; return; }
+      const missiles = 1 + Math.floor(p.level / 3);
+      let totalDmg = 0;
+      for(let i = 0; i < missiles; i++) totalDmg += rng.dice(1, 4, 1);
+      if(p.passives.includes('magic_affinity')) totalDmg = Math.floor(totalDmg * 1.2);
+      if(p.status.spell_power_boost) totalDmg += 3;
+      mmTarget.hp -= totalDmg;
+      log(`${missiles} magic missile${missiles>1?'s':''} strike${missiles===1?'s':''} ${mmTarget.name} for ${totalDmg} damage!`, 'combat');
+      gainPiety('killing_with_magic', 1);
+      if(mmTarget.hp <= 0) killMonster(mmTarget);
+      break;
+    }
   }
   
   closeSpellScreen();
@@ -4927,6 +5355,28 @@ function applyPotion(item) {
         log('A wave of clarity washes over you. Your mind feels sharp!', 'good');
       }
       break;
+    case 'antidote':
+      if(p.status.poisoned) {
+        delete p.status.poisoned;
+        p.status.poison_resist = 20;
+        log('The antidote purges the poison! You feel resistant to venom.', 'good');
+      } else {
+        p.status.poison_resist = 20;
+        log('You drink the antidote. You feel resistant to poison for a while.', 'good');
+      }
+      break;
+    case 'restoration':
+      let restored = [];
+      if(p.status.confused) { delete p.status.confused; restored.push('confusion'); }
+      if(p.status.blinded) { delete p.status.blinded; restored.push('blindness'); computeFOV(); }
+      if(p.status.weakened) { p.stats.str += (p.status.weakened_amount||4); delete p.status.weakened; delete p.status.weakened_amount; restored.push('weakness'); }
+      if(restored.length > 0) {
+        log(`You feel restored! Cured: ${restored.join(', ')}.`, 'good');
+      } else {
+        log('A warm glow suffuses your body. You feel restored!', 'good');
+        p.hp = Math.min(p.maxHp, p.hp + rng.int(5, 15));
+      }
+      break;
     case 'temp_might': {
       const amt = item.power || 2;
       p.status.might = item.duration || 20;
@@ -5069,6 +5519,19 @@ function equipItem(item) {
     else log(`The ${item.name} is cursed!`, 'warning');
     if(item.strBonus && item.strBonus < 0) p.stats.str += item.strBonus;
   }
+
+  // Unique item equip effects
+  if(item.unique) {
+    if(item.dexPenalty) { p.stats.dex -= item.dexPenalty; log(`The ${item.name} is heavy. DEX -${item.dexPenalty}.`, 'warning'); }
+    if(item.wisBonus) p.stats.wis += item.wisBonus;
+    if(item.mpBonus && item.type === 'weapon') { p.maxMp += item.mpBonus; p.mp += item.mpBonus; }
+    if(item.pietyDrain && p.god) {
+      p.piety = Math.max(0, p.piety - item.pietyDrain);
+      log('The gods recoil from this dark artifact!', 'warning');
+    }
+    if(item.noSpells) log('A surge of rage silences your spellcasting ability!', 'warning');
+    if(item.desc) log(item.desc, 'info');
+  }
 }
 
 function unequipItem(item) {
@@ -5082,6 +5545,9 @@ function unequipItem(item) {
       if(item.intBonus) p.stats.int -= item.intBonus;
       if(item.mpBonus) { p.maxMp -= item.mpBonus; p.mp = Math.min(p.mp, p.maxMp); }
       if(item.hpBonus) { p.maxHp -= item.hpBonus; p.hp = Math.min(p.hp, p.maxHp); }
+      // Unique item unequip
+      if(item.dexPenalty) p.stats.dex += item.dexPenalty;
+      if(item.wisBonus) p.stats.wis -= item.wisBonus;
       p.equipped[slot] = null;
       log(`You remove the ${item.name}.`, 'info');
       return;
@@ -5101,6 +5567,12 @@ function fireRanged() {
     if(!weapon.identified) {
       identifyItem(weapon);
       log(`It's a ${weapon.name}!`, 'good');
+    }
+    // 10% fizzle chance
+    if(rng.bool(0.1)) {
+      log('The wand fizzles and sputters!', 'warning');
+      endTurn();
+      return;
     }
     fireWand(weapon);
     return;
@@ -5350,6 +5822,55 @@ function descend() {
   G.floor++;
   log(`You descend to floor ${G.floor}.`, 'system');
   flash(`FLOOR ${G.floor}`);
+
+  // Floor theme entry message
+  const entryTheme = getFloorTheme(G.floor);
+  const themeMessages = {
+    'Dungeon': null,
+    'Flooded Caves': 'The air grows damp. Water drips from the ceiling and pools on the floor.',
+    'Crypt': 'A deathly chill settles in. The walls are lined with ancient bones.',
+    'Forge': 'Waves of heat roll through the corridors. The stone glows red in places.',
+    'Abyss': 'Reality warps at the edges of your vision. The air hums with dark energy.',
+    "Baal's Throne": 'The walls pulse with crimson light. You feel an immense presence watching.',
+  };
+  if(themeMessages[entryTheme.name]) log(themeMessages[entryTheme.name], 'warning');
+
+  // Companion reactions to floor themes
+  const compReactions = {
+    'Flooded Caves': {
+      'Torben Ironhands': '"Water. Hate water. Rusts the blade."',
+      'Mirela the Quick': '"Watch your footing. These stones are slick."',
+      'Brother Aldric': '"Water... the element of purification. We are tested."',
+      'Ghokk': '"GHOKK NOT LIKE WET."',
+    },
+    'Crypt': {
+      'Torben Ironhands': '"Stay close. The dead don\'t rest easy here."',
+      'Brother Aldric': '"I sense many restless spirits. My prayers will shield us."',
+      'Zelphira the Pale': '"Fascinating... the necromantic energy here is palpable."',
+    },
+    'Forge': {
+      'Torben Ironhands': '"Now THIS is where a weapon is born. Fine heat."',
+      'Ghokk': '"HOT. GHOKK LIKE HOT. REMIND OF HOME."',
+    },
+    'Abyss': {
+      'Brother Aldric': '"Gods preserve us. This place is an abomination."',
+      'Zelphira the Pale': '"The veil between planes is thin here. Be careful what you wish for."',
+      'Nyx Shadowwhisper': '"Even I don\'t like this place. Too many shadows that move on their own."',
+    },
+    "Baal's Throne": {
+      'Torben Ironhands': '"This is it. Whatever happens — it\'s been an honor."',
+      'Brother Aldric': '"The final trial. May the gods grant us strength."',
+      'Ghokk': '"GHOKK SMASH BIG DEMON. GHOKK NOT AFRAID."',
+    },
+  };
+  const reactions = compReactions[entryTheme.name];
+  if(reactions) {
+    for(const comp of G.player.companions) {
+      if(reactions[comp.name]) {
+        log(`${comp.name}: ${reactions[comp.name]}`, 'info');
+      }
+    }
+  }
 
   // Rest bonus between floors
   player.hp = Math.min(player.maxHp, player.hp + Math.floor(player.maxHp * 0.15));
@@ -6168,6 +6689,27 @@ function handleKey(e) {
     return;
   }
 
+  // Reach mode — lunge attack at 2-tile range
+  if(G.reachMode) {
+    e.preventDefault();
+    const reachMoves = {
+      'ArrowUp': [0,-1], 'ArrowDown': [0,1], 'ArrowLeft': [-1,0], 'ArrowRight': [1,0],
+      'k': [0,-1], 'j': [0,1], 'h': [-1,0], 'l': [1,0],
+      'y': [-1,-1], 'u': [1,-1], 'b': [-1,1], 'n': [1,1],
+      '8': [0,-1], '2': [0,1], '4': [-1,0], '6': [1,0],
+      '7': [-1,-1], '9': [1,-1], '1': [-1,1], '3': [1,1],
+      'Numpad4': [-1,0], 'Numpad6': [1,0], 'Numpad8': [0,-1], 'Numpad2': [0,1],
+      'Numpad7': [-1,-1], 'Numpad9': [1,-1], 'Numpad1': [-1,1], 'Numpad3': [1,1],
+    };
+    if(e.key === 'Escape') { G.reachMode = false; log('Lunge cancelled.', 'info'); renderAll(); return; }
+    if(reachMoves[e.key]) {
+      G.reachMode = false;
+      reachAttack(...reachMoves[e.key]);
+      return;
+    }
+    return;
+  }
+
   // Screen-specific keys
   if(G.mutOpen) {
     if(e.key === 'Escape' || e.key === 'm' || e.key === '`' || e.key === '~') closeMutScreen();
@@ -6338,6 +6880,14 @@ function handleKey(e) {
     case 'x':
       G.attackMode = true;
       log('Attack mode — choose a direction to strike.', 'info');
+      break;
+    case 'p':
+      if(G.player.equipped.weapon?.reach) {
+        G.reachMode = true;
+        log('Lunge — choose a direction to strike at range.', 'info');
+      } else {
+        log('You need a reach weapon (spear, halberd) to lunge.', 'warning');
+      }
       break;
     case 'T':
       turnUndead();
@@ -6569,12 +7119,22 @@ function openCompanionOrder(comp) {
   const mode = comp.stayPut ? 'STAYING PUT' : 'FOLLOWING';
   const toggleLabel = comp.stayPut ? 'Follow me' : 'Stay here';
   const toggleColor = comp.stayPut ? 'var(--green)' : 'var(--amber)';
+  const lvl = comp.compLevel || 1;
+  const wpnInfo = comp.equippedWeapon ? `Weapon: ${comp.equippedWeapon.name}` : 'Weapon: bare fists';
+  const weapons = G.player.inventory.filter(i => i.type === 'weapon' && !i.cursed);
+  let wpnOptions = '';
+  if(weapons.length > 0) {
+    wpnOptions = `<div style="padding:8px;cursor:pointer;border-bottom:1px solid var(--border);font-size:18px;" onclick="companionGiveWeapon('${comp.id || comp.name}')">
+      <span style="color:var(--cyan)">b) Give weapon</span>
+    </div>`;
+  }
   let html = `<div style="font-family:'VT323',monospace;padding:10px;">
     <h2 style="color:var(--amber);font-size:26px;margin-bottom:6px;">⚔ ${comp.name}</h2>
-    <p style="font-family:'Share Tech Mono';font-size:13px;color:var(--gray);margin-bottom:12px;">${comp.hp}/${comp.maxHp} HP — Currently: <span style="color:var(--white)">${mode}</span></p>
+    <p style="font-family:'Share Tech Mono';font-size:13px;color:var(--gray);margin-bottom:12px;">${comp.hp}/${comp.maxHp} HP — Level ${lvl} — ${wpnInfo}<br>Currently: <span style="color:var(--white)">${mode}</span></p>
     <div style="padding:8px;cursor:pointer;border-bottom:1px solid var(--border);font-size:18px;" onclick="companionToggleFollow('${comp.id || comp.name}')">
       <span style="color:${toggleColor}">a) ${toggleLabel}</span>
     </div>
+    ${wpnOptions}
     <button class="menu-btn" onclick="closeCompanionChat()" style="margin-top:10px">Cancel (ESC)</button>
   </div>`;
   G.companionChatOpen = true;
@@ -6593,6 +7153,47 @@ window.companionToggleFollow = function(compId) {
   } else {
     log(`${comp.name}: "Right behind you."`, 'info');
   }
+};
+
+window.companionGiveWeapon = function(compId) {
+  const comp = G.player.companions.find(c => (c.id || c.name) === compId);
+  closeCompanionChat();
+  if(!comp) return;
+  const weapons = G.player.inventory.filter(i => i.type === 'weapon' && !i.cursed);
+  if(weapons.length === 0) { log('You have no weapons to give.', 'info'); return; }
+  // Show weapon selection modal
+  let html = `<div style="font-family:'VT323',monospace;padding:10px;">
+    <h2 style="color:var(--amber);font-size:22px;margin-bottom:10px;">Give weapon to ${comp.name}</h2>`;
+  weapons.forEach((w, i) => {
+    const key = String.fromCharCode(97 + i);
+    html += `<div style="padding:5px 8px;cursor:pointer;font-size:16px;border-bottom:1px solid var(--border);" onclick="doGiveWeapon('${compId}', ${i})">
+      <span style="color:var(--amber)">${key})</span> <span style="color:var(--cyan)">${w.name}</span>
+    </div>`;
+  });
+  html += `<button class="menu-btn" onclick="closeCompanionChat()" style="margin-top:10px">Cancel (ESC)</button></div>`;
+  G.companionChatOpen = true;
+  const modal = document.getElementById('modal');
+  document.getElementById('modal-content').innerHTML = html;
+  modal.style.display = 'flex';
+};
+
+window.doGiveWeapon = function(compId, wpnIdx) {
+  const comp = G.player.companions.find(c => (c.id || c.name) === compId);
+  const weapons = G.player.inventory.filter(i => i.type === 'weapon' && !i.cursed);
+  const weapon = weapons[wpnIdx];
+  closeCompanionChat();
+  if(!comp || !weapon) return;
+  // Return old weapon to player inventory if any
+  if(comp.equippedWeapon) {
+    G.player.inventory.push(comp.equippedWeapon);
+    log(`${comp.name} returns the ${comp.equippedWeapon.name}.`, 'info');
+  }
+  // Remove from player inventory and give to companion
+  G.player.inventory = G.player.inventory.filter(i => i !== weapon);
+  comp.equippedWeapon = weapon;
+  comp.atk = [weapon.dmg]; // Use weapon's damage dice
+  log(`${comp.name} wields the ${weapon.name}!`, 'good');
+  renderAll();
 };
 
 function closeCompanionChat() {
@@ -6629,6 +7230,7 @@ function saveGame() {
       ringLooks: GAME_RING_LOOKS,
       amuletLooks: GAME_AMULET_LOOKS,
       wandLooks: GAME_WAND_LOOKS,
+      foundUniques: [...(G.foundUniques || [])],
       savedAt: Date.now()
     };
     // Level: tiles as flat array, explored/visible as arrays
@@ -6705,7 +7307,9 @@ function continueGame() {
       alignmentOpen: false,
       debugOpen: false,
       attackMode: false,
+      reachMode: false,
       autoExploreActive: false,
+      foundUniques: new Set(data.foundUniques || []),
     };
 
     // Backward compat: alignment field for old saves

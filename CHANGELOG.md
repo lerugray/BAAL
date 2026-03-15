@@ -1,5 +1,119 @@
 # BAAL — Changelog
 
+## v5c (2026-03-14)
+
+### 8-Bit Remaster Tileset + Animated Sprites
+- **Multi-spritesheet system** — Loads 5 spritesheets: Remaster World (12x12, terrain/items), Character (12x12, 44 animated character types), Bosses (24x24, 6 boss types), FX (8x8, spell effects), and Classic Roguelike (8x8, fallback). Graceful fallback chain: Remaster → Classic → ASCII.
+- **Themed dungeon tiles** — Each floor band uses different wall, floor, door, and stair tiles from the World sheet. Grey stone for Dungeon, cave walls for Flooded Caves, stone brick for Crypt, red brick for Forge, frost for Abyss, turret for Baal's Throne.
+- **Directional character animation** — Player and monsters have idle, walk, and attack animations in 4 directions (right, down, up, left). 2 frames per state at 500ms. Entities track `facing` direction and `animState`.
+- **Player sprite by class/race** — Fighting-Man uses warrior sprite, Cleric uses cleric sprite, Magic-User uses mage sprite. Elf and dwarf races override to dedicated sprites.
+- **Monster sprite mapping** — 40+ monsters mapped to Remaster character rows (rat, bat, spider, goblin, skeleton, zombie, orc, gnoll, snake, slime, ghost, flame, spark, imp, demon, etc.). Unmapped monsters fall back to Classic tileset.
+- **Boss rendering at 2x size** — Bosses (Baal=dragon, Lich King=reaper, Vampire Lord=lord, Orc Warlord=cyclops) render from the Bosses sheet at double tile size, centered over their position. Visually dramatic.
+- **Item sprites from World sheet** — Swords, daggers, axes, hammers, spears, staves, bows, shields, armor, helms, boots, cloaks, potions (colored), scrolls, rings, amulets, food, and gold all have dedicated 12x12 sprites.
+- **Default zoom 3x** — CELL_SIZE now 36px (3x of 12px tiles). Zoom range 24-48 (2x-4x), step 6.
+- **Facing direction tracking** — `tryMove()` and `moveToward()` update entity facing. `attackMonster()` sets attack animation state. `endTurn()` resets all to idle.
+
+---
+
+## v5b (2026-03-14)
+
+### Full UI Overhaul
+- **Bottom HUD bar** — Replaced the 280px right sidebar with a compact bottom HUD bar. Map now takes full screen width. HUD shows identity, HP/MP/XP/hunger bars, stats, equipment sprite icons, faith, nearby monsters with sprites, and action buttons.
+- **Equipment sprite icons** — 10 equipment slots rendered as tile sprites from the Oryx spritesheet with hover tooltips showing item details. Falls back to text glyphs in ASCII mode.
+- **Monster panel with sprites** — NEARBY monsters now shown with their tile sprite, name, and HP bar in the HUD.
+- **Log overlay** — Log messages now overlay the map semi-transparently (bottom-left), expanding on hover. No longer takes a fixed grid row.
+- **Minimap overlay** — Minimap moved to a top-right overlay on the map canvas (180x60), with hover opacity.
+- **Removed CRT effects** — Scanlines and vignette removed; they clashed with the pixel art tileset.
+- **Updated color palette** — Shifted from terminal amber to warmer dungeon tones (parchment text, earthier borders).
+- **Default 3x zoom** — CELL_SIZE now defaults to 24px (3x tile scale) to better show off the Oryx art.
+- **Mouse wheel zoom** — Scroll wheel on the map zooms between 2x-4x (16px to 32px tiles). Zoom preference persisted to localStorage.
+- **Tileset as default** — Tile mode is now the out-of-box experience. ASCII mode still available via F1 toggle.
+- **Numpad 0 auto-explore** — Numpad 0 (Insert) now triggers auto-explore, same as O key.
+
+---
+
+## v5 (2026-03-14)
+
+### Multi-File Refactor
+- **Split into 5 files** — `index.html`, `data.js`, `engine.js`, `render.js`, `ui.js`. No logic changes — purely structural. Load order: data → engine → render → ui. All globals remain global.
+
+### Brogue-Style Visual Effects
+- **Animation loop** — `requestAnimationFrame` at 15 FPS. Tiles animate even when the player is idle. Game logic is unaffected (turn-based state only changes on input).
+- **Dancing colors** — Water, lava, and altar tiles subtly shift their foreground color each frame using sine waves with per-tile phase offsets. Water ripples blue, lava flickers orange-red, altars pulse purple.
+- **Dynamic lighting** — Light sources (lava, altars, shops, fire elementals, player torch) cast colored light into surrounding tiles with distance falloff and flicker. Uses typed arrays for per-tile light accumulation and additive canvas blending.
+- **Combat flash effects** — Red flash on monster hit, bright yellow-white on critical hit, red flash on player when taking damage, white burst on monster kill. Effects fade over 200-400ms.
+- **Smooth fog of war** — Explored-but-not-visible tiles now draw with their original colors under a dark overlay (70% opacity), preserving color hints instead of the old flat `#2a2a44`.
+
+### Oryx Tileset Support
+- **Tileset renderer** — Loads Oryx Classic Roguelike spritesheet (`ascii_plus.png`, 256x256, 8x8 tiles, 32 columns). Draws at 2x scale with crisp pixel scaling (`imageSmoothingEnabled = false`).
+- **Tile mapping** — Terrain, monsters, items, player, and companions mapped to spritesheet tile IDs. Monsters use template key lookup to avoid glyph collisions (e.g., `s` = skeleton vs spider).
+- **Water/lava animation** — Spritesheet water and lava tiles alternate between animation frames (matching the TSX timing: water at 600ms, lava at 300ms).
+- **F1 toggle** — Press F1 to switch between ASCII and tileset mode. Preference saved to localStorage. Both modes benefit from all Brogue-style effects.
+- **drawEntity() helper** — Unified function that renders either a glyph or sprite tile, used throughout the render loop.
+
+---
+
+## v4f (2026-03-14)
+
+### Weapon Properties Activated
+- **Weapon speed** — Slow weapons (greatsword, warhammer, halberd, longbow, crossbow) cost an extra turn to recover after attacking. Fast weapons (dagger) grant a bonus action where monsters don't move.
+- **Reach attacks (P key)** — DCSS-style lunge: press P then a direction to strike a monster 2 tiles away with reach weapons (spear, halberd). Requires line of sight through the intermediate tile.
+- **Cleave** — Battle axe and halberd hit a second adjacent monster for half damage when killing the first target.
+- **Weapon tags in UI** — Side panel now shows [fast], [slow], [reach], [cleave] tags on equipped weapons.
+- **Weapon status effects** — Dagger has 20% chance to poison monsters on hit. Mace has 20% chance to slow monsters on hit.
+
+### Wand & Spell Balance
+- **Wand charges reduced ~30%** — Fire 8→5, Cold 8→5, Lightning 6→4, Poison 10→7, Sleep 8→5, Digging 12→8, Polymorph 5→4.
+- **10% wand fizzle chance** — Each zap has a chance to waste a charge with no effect.
+- **Wand floor gate raised** — Offensive wands now appear floor 9+ (was 7+), utility wands floor 11+ (was 10+).
+- **6 new spells:**
+  - Cleric: Cure Poison (4 MP), Sanctuary (8 MP, 50% miss for 10 turns), Smite (6 MP, 3d8 holy, bonus vs undead)
+  - Magic-User: Detect Monsters (3 MP, sense all monsters 20 turns), Shield (5 MP, +4 AC 15 turns), Haste (8 MP, act twice per turn 8 turns)
+- **Magic Missile scales with level** — Now fires 1 + floor(level/3) missiles at 1d4+1 each, D&D-style.
+- **INT scaling improved** — Damage spells get a multiplier from high INT (14 INT = +10%, 18 INT = +20%).
+
+### 8 Unique Named Items
+Items with genuine trade-offs, each spawning at most once per run (~3% chance scaling with floor):
+- **Frostbrand** (floor 6+) — 1d8+2, slows targets, +1d4 cold damage. Costs 1 HP/turn from the chill.
+- **Sword of Kas** (floor 10+) — 2d8+3, crits on 16+. Drains 1 HP per kill.
+- **Staff of the Magi** (floor 9+) — +5 spell damage, +20 max MP. No STR bonus to melee.
+- **Aegis Shield** (floor 7+) — AC +5, reflects 25% melee damage. -2 DEX.
+- **Boots of the Zephyr** (floor 8+) — Always fast speed, negates slow weapon penalty.
+- **Crown of Madness** (floor 11+) — +3 INT, +3 WIS. 10% confusion chance per turn.
+- **Vampiric Blade** (floor 8+) — 1d6+1 fast, heals 25% of damage dealt. -10 piety on equip.
+- **Ring of the Berserker** (floor 5+) — +4 STR, auto-retaliates when hit. Blocks all spellcasting.
+
+### Floor Themes
+Each floor band now has distinct colors, terrain, and monster composition:
+- **Floors 1-3: Dungeon** — Default stone dungeon.
+- **Floors 4-6: Flooded Caves** — Blue-green palette, extra water tiles.
+- **Floors 7-9: Crypt** — Grey/bone palette, FOV reduced by 1, 3x undead spawn weight.
+- **Floors 10-12: Forge** — Red/orange palette, extra lava tiles.
+- **Floors 13-15: Abyss** — Purple palette, extra traps, 3x demon spawn weight.
+- **Floor 16: Baal's Throne** — Gold/crimson palette.
+- Atmospheric entry messages on each new floor theme.
+
+### Special Room Types
+1-2 special rooms per floor (from middle rooms):
+- **Armory** — 2-4 weapons/armor from a deeper floor pool, guarded by 1-2 tougher monsters.
+- **Library** — 2-3 scrolls (teleport, identify, mapping, enchant, acquirement).
+- **Treasure Vault** — 3-5 gold piles + 1 good item, trapped entrances.
+- **Crypt Chamber** — 3-5 undead, guaranteed ring or amulet drop.
+
+### Status Effect Counterplay
+- **Potion of Antidote** — Cures poison and grants 20-turn poison resistance.
+- **Potion of Restoration** — Cures confusion, blindness, and weakness. Heals 5-15 HP if nothing to cure.
+- **CON saving throws** — Each turn under a negative status, roll 1d20 + CON mod. On 18+, the status ends early. High-CON races (dwarf, half-orc) now have meaningful status resistance.
+- **Poison resistance status** — Blocks monster poison attacks while active.
+
+### Companion Improvements
+- **Companion leveling** — Companions earn XP when within 5 tiles of a kill. Level thresholds: 50, 150, 400, 1000, 2500, 5000 XP. Each level: +5 HP, +1 damage bonus.
+- **Companion equipment** — Give weapons to companions via the companion chat menu (C key → select companion → Give weapon). Companions use the given weapon's damage dice.
+- **Companion level display** — Side panel shows companion level and equipped weapon.
+- **Companion reactions** — Companions comment on floor themes with unique dialogue per character (e.g., Torben on the Forge, Aldric in the Crypt, Ghokk in the Abyss).
+
+---
+
 ## v4e-b (2026-03-03)
 
 ### Weapon System Expansion

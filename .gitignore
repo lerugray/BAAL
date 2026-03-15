@@ -35,3 +35,10 @@ coverage/
 # Misc
 *.tmp
 *.bak
+
+# Claude Code local data
+.claude/
+
+# Licensed tileset assets (not for redistribution)
+oryx_classic_roguelike/
+oryx_8-bit_remaster/

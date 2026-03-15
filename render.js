@@ -1032,7 +1032,7 @@ function updateSidePanel() {
   renderMinimap();
 }
 
-const EQUIP_SLOTS = ['weapon','offhand','body','head','ring1','ring2','neck','cloak','boots','ammo'];
+const EQUIP_SLOTS = ['weapon','ranged','offhand','body','head','ring1','ring2','neck','cloak','boots','ammo'];
 const EQUIP_SLOT_LABELS = ['Wpn','Off','Body','Head','R1','R2','Neck','Clk','Boot','Ammo'];
 
 function updateEquipStrip() {

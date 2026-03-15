@@ -151,7 +151,7 @@ function initPlayer(race, cls, name) {
     gold: raceData.startGold,
     inventory: startItems,
     equipped: {
-      weapon: null, offhand: null, body: null, head: null,
+      weapon: null, ranged: null, offhand: null, body: null, head: null,
       ring1: null, ring2: null, neck: null, cloak: null, boots: null, ammo: null
     },
     spells,
@@ -3601,7 +3601,7 @@ function unequipItem(item) {
 
 function fireRanged() {
   const p = G.player;
-  const weapon = p.equipped.weapon;
+  const weapon = p.equipped.ranged || (p.equipped.weapon?.ranged ? p.equipped.weapon : null);
   if(!weapon || !weapon.ranged) { log('You have no ranged weapon equipped!', 'warning'); return; }
 
   if(weapon.type === 'wand') {

@@ -603,6 +603,29 @@ function tryMove(dx, dy) {
     autoPickup(nx, ny);
     return true;
   }
+
+  if(tile === TILE.SHAFT) {
+    player.x = nx; player.y = ny;
+    const drop = rng.int(1, 2);
+    const newFloor = Math.min(16, G.floor + drop);
+    if(newFloor === G.floor) { return true; } // already at bottom
+    log(`The floor gives way! You fall ${drop} floor${drop>1?'s':''}!`, 'warning');
+    if(typeof SFX !== 'undefined') SFX.trap();
+    const fallDmg = rng.dice(drop, 6, 0);
+    player.hp -= fallDmg;
+    log(`You take ${fallDmg} damage from the fall!`, 'combat');
+    if(player.hp <= 0) { die('a shaft trap'); return true; }
+    G.floor = newFloor;
+    flash(`FELL TO FLOOR ${G.floor}`);
+    G.level = generateLevel(G.floor);
+    const [sx2, sy2] = G.level.startPos;
+    player.x = sx2; player.y = sy2;
+    player.companions.forEach(c => { c.x = sx2+1; c.y = sy2; });
+    computeFOV();
+    renderAll();
+    endTurn();
+    return true;
+  }
   
   if(tile === TILE.WATER) {
     if(!player.passives.includes('amphibious') && !player.passives.includes('nature_walk')) {

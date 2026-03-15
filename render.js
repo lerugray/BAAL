@@ -329,55 +329,55 @@ const THEMED_TERRAIN = {
     wall: 0, floor: 115, floor_dot: 92, corridor: 92,
     door: 138, stairs_down: 46, stairs_up: 69,
     water: [102,103], lava: [106,107],
-    trap: 230, altar: [178,179], shop: 167, portal: 230
+    trap: 230, altar: [178,179], shop: 167, portal: 230, shaft: 123, shaft: 123
   },
   caves: {
     wall: 5, floor: 119, floor_dot: 96, corridor: 96,
     door: 138, stairs_down: 51, stairs_up: 74,
     water: [102,103], lava: [106,107],
-    trap: 230, altar: [178,179], shop: 167, portal: 230
+    trap: 230, altar: [178,179], shop: 167, portal: 230, shaft: 123, shaft: 123
   },
   crypt: {
     wall: 1, floor: 116, floor_dot: 93, corridor: 93,
     door: 140, stairs_down: 47, stairs_up: 70,
     water: [102,103], lava: [106,107],
-    trap: 175, altar: [178,179], shop: 167, portal: 230
+    trap: 175, altar: [178,179], shop: 167, portal: 230, shaft: 123
   },
   forge: {
     wall: 2, floor: 122, floor_dot: 99, corridor: 99,
     door: 140, stairs_down: 48, stairs_up: 71,
     water: [102,103], lava: [106,107],
-    trap: 230, altar: [178,179], shop: 167, portal: 230
+    trap: 230, altar: [178,179], shop: 167, portal: 230, shaft: 123
   },
   abyss: {
     wall: 6, floor: 121, floor_dot: 98, corridor: 98,
     door: 142, stairs_down: 52, stairs_up: 75,
     water: [102,103], lava: [106,107],
-    trap: 231, altar: [178,179], shop: 167, portal: 230
+    trap: 231, altar: [178,179], shop: 167, portal: 230, shaft: 123
   },
   throne: {
     wall: 7, floor: 118, floor_dot: 95, corridor: 95,
     door: 142, stairs_down: 54, stairs_up: 77,
     water: [102,103], lava: [106,107],
-    trap: 232, altar: [178,179], shop: 167, portal: 230
+    trap: 232, altar: [178,179], shop: 167, portal: 230, shaft: 123
   },
   duat: {
     wall: 5, floor: 120, floor_dot: 97, corridor: 97,
     door: 138, stairs_down: 54, stairs_up: 77,
     water: [102,103], lava: [106,107],
-    trap: 230, altar: [178,179], shop: 167, portal: 230
+    trap: 230, altar: [178,179], shop: 167, portal: 230, shaft: 123
   },
   mictlan: {
     wall: 2, floor: 122, floor_dot: 99, corridor: 99,
     door: 140, stairs_down: 48, stairs_up: 71,
     water: [102,103], lava: [106,107],
-    trap: 231, altar: [178,179], shop: 167, portal: 231
+    trap: 231, altar: [178,179], shop: 167, portal: 231, shaft: 123
   },
   tartarus: {
     wall: 6, floor: 121, floor_dot: 98, corridor: 98,
     door: 142, stairs_down: 52, stairs_up: 75,
     water: [102,103], lava: [106,107],
-    trap: 232, altar: [178,179], shop: 167, portal: 232
+    trap: 232, altar: [178,179], shop: 167, portal: 232, shaft: 123
   }
 };
 
@@ -396,6 +396,7 @@ const TILE_TO_TERRAIN_KEY = {
   [TILE.SHOP]:        'shop',
   [TILE.TRAP]:        'trap',
   [TILE.PORTAL]:      'portal',
+  [TILE.SHAFT]:       'shaft',
 };
 
 // Map floor number → theme key

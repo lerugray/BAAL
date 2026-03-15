@@ -890,7 +890,7 @@ const MONSTER_SOUNDS = {
 // ─── TILE CONSTANTS ──────────────────────────────────────────
 const TILE = {
   WALL: 0, FLOOR: 1, CORRIDOR: 2, DOOR: 3, STAIRS_DOWN: 4, STAIRS_UP: 5,
-  WATER: 6, LAVA: 7, DARK_FLOOR: 8, ALTAR: 9, SHOP: 10, TRAP: 11, PORTAL: 12,
+  WATER: 6, LAVA: 7, DARK_FLOOR: 8, ALTAR: 9, SHOP: 10, TRAP: 11, PORTAL: 12, SHAFT: 13,
 };
 
 const MAP_W = 80;
@@ -913,6 +913,7 @@ const TILE_COLORS = {
   [TILE.SHOP]:       { ch:'¥', fg:'#dd44ff', bg:'#0a0a14' },
   [TILE.TRAP]:       { ch:'^', fg:'#996600', bg:'#0a0a14' },
   [TILE.PORTAL]:     { ch:'O', fg:'#ff44ff', bg:'#1a0820' },
+  [TILE.SHAFT]:      { ch:'▼', fg:'#cc3333', bg:'#1a0808' },
 };
 
 const FLOOR_THEMES = {

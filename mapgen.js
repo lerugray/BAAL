@@ -164,6 +164,18 @@ function generateLevel(floor) {
     }
   }
 
+  // Shafts (one-way descent) — floors 3-14, 1-2 per level, never on final floors
+  if(floor >= 3 && floor <= 14) {
+    const numShafts = rng.int(0, 2);
+    for(let i = 0; i < numShafts; i++) {
+      const r = rng.pick(rooms.slice(1, -1));
+      if(!r) continue;
+      const sx = rng.int(r.x+1, r.x+r.w-2);
+      const sy = rng.int(r.y+1, r.y+r.h-2);
+      if(tiles[sy][sx] === TILE.FLOOR) tiles[sy][sx] = TILE.SHAFT;
+    }
+  }
+
   // Special rooms (1-2 per floor from middle rooms)
   const earlyEligible = Object.entries(MONSTER_TEMPLATES).filter(([k, v]) => !v.unique && !v.branch && v.floor[0] <= floor && v.floor[1] >= floor);
   if(rooms.length >= 5) {

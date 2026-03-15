@@ -90,7 +90,7 @@ function initPlayer(race, cls, name) {
   }
   
   const maxHp = rng.dice(1, classData.hpDice, stats.con - 10) + classData.hpDice;
-  const maxMp = classData.mpBase + (stats.int - 10) * 2 + (stats.wis - 10);
+  const maxMp = Math.max(0, classData.mpBase + (stats.int - 10) * 2 + (stats.wis - 10));
   
   const spells = [...classData.spells.slice(0, 2)]; // Start with first 2, learn more by leveling
   
@@ -1858,7 +1858,7 @@ function updateMutIndicator() {
   const cnt = document.getElementById('mut-count');
   if(el && p.mutations.length > 0) {
     el.style.display = 'block';
-    cnt.textContent = `(${p.mutations.length})`;
+    if(cnt) cnt.textContent = `(${p.mutations.length})`;
   }
 }
 

@@ -92,7 +92,7 @@ function initPlayer(race, cls, name) {
   const maxHp = rng.dice(1, classData.hpDice, stats.con - 10) + classData.hpDice;
   const maxMp = classData.mpBase + (stats.int - 10) * 2 + (stats.wis - 10);
   
-  const spells = [...classData.spells.slice(0, 3)]; // Start with first few
+  const spells = [...classData.spells.slice(0, 2)]; // Start with first 2, learn more by leveling
   
   // Starting equipment
   const startItems = [];

@@ -537,7 +537,7 @@ const SPELL_DATA = {
   called_shot: { name:'Called Shot', mp:0, level:1, school:'martial', target:'self', desc:'Next ranged attack: +4 to hit, +1d6 damage.', effect:'called_shot', cls:['ranger'] },
   camouflage: { name:'Camouflage', mp:4, level:2, school:'martial', target:'self', desc:'Blend into surroundings. Invisible while stationary for 10 turns.', effect:'camouflage', cls:['ranger'] },
   // Warlock
-  eldritch_blast: { name:'Eldritch Blast', mp:0, level:1, school:'eldritch', target:'single', desc:'Bolt of dark energy. Damage scales with piety, not level.', effect:'eldritch_blast', cls:['warlock'] },
+  eldritch_blast: { name:'Eldritch Blast', mp:3, level:1, school:'eldritch', target:'single', desc:'Bolt of dark energy. Damage scales with piety, not level.', effect:'eldritch_blast', cls:['warlock'] },
   hex: { name:'Hex', mp:5, level:1, school:'eldritch', target:'single', desc:'Curse a target. -2 AC, -2 to hit for 15 turns.', effect:'hex', cls:['warlock'] },
   dark_pact: { name:'Dark Pact', mp:0, level:2, school:'eldritch', target:'self', desc:'Sacrifice 20% HP to restore 40% MP.', effect:'dark_pact', cls:['warlock'] },
   soul_drain: { name:'Soul Drain', mp:8, level:3, school:'eldritch', target:'single', desc:'Drain life from target. Deal damage and heal yourself.', effect:'soul_drain', cls:['warlock'] },

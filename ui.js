@@ -1,3 +1,21 @@
+// Helper to create an inline sprite canvas HTML string for use in DOM content
+function spriteHTML(tileId, sheetKey, size) {
+  size = size || 16;
+  const srcSize = sheetKey === 'world' ? 12 : (sheetKey === 'character' ? 12 : 8);
+  return `<canvas class="inline-sprite" width="${srcSize}" height="${srcSize}" style="width:${size}px;height:${size}px;image-rendering:pixelated;vertical-align:middle;" data-tileid="${tileId}" data-sheet="${sheetKey}"></canvas>`;
+}
+
+// Helper to render all inline sprite canvases in a container element
+function renderInlineSprites(container) {
+  if(!container) return;
+  container.querySelectorAll('canvas.inline-sprite[data-tileid]').forEach(c => {
+    const sheetKey = c.dataset.sheet || 'classic';
+    if(typeof drawSpriteToCanvas === 'function') {
+      drawSpriteToCanvas(c, parseInt(c.dataset.tileid), sheetKey);
+    }
+  });
+}
+
 // ─── ALIGNMENT SCREEN ──────────────────────────────────────
 function openAlignmentScreen() {
   const p = G.player;
@@ -40,17 +58,19 @@ function openAlignmentScreen() {
   const chaoticMons = factionMonsters.filter(([k, v]) => v.faction === 'chaotic');
 
   html += `<div style="font-size:16px;color:#44ccff;margin-top:8px;">LAWFUL</div>`;
-  for(const [key, mon] of lawfulMons) {
+  for(const [k, mon] of lawfulMons) {
     const isNeutral = playerFaction === 'lawful';
     const status = isNeutral ? '<span style="color:#44ccff">Neutral</span>' : '<span style="color:#ff4444">Hostile</span>';
-    html += `<div style="font-size:14px;font-family:'Share Tech Mono';padding:2px 8px;"><span style="color:${mon.color}">${mon.sym}</span> ${mon.name} — ${status} <span style="color:var(--gray)">(floor ${mon.floor[0]}-${mon.floor[1]})</span></div>`;
+    const monGlyph = useTileset && MONSTER_CHAR_ROW[k] !== undefined ? spriteHTML(getCharTileId(MONSTER_CHAR_ROW[k], 'd', 'idle'), 'character', 18) : `<span style="color:${mon.color}">${mon.sym}</span>`;
+    html += `<div style="font-size:14px;font-family:'Share Tech Mono';padding:2px 8px;">${monGlyph} ${mon.name} — ${status} <span style="color:var(--gray)">(floor ${mon.floor[0]}-${mon.floor[1]})</span></div>`;
   }
 
   html += `<div style="font-size:16px;color:#ff4444;margin-top:8px;">CHAOTIC</div>`;
-  for(const [key, mon] of chaoticMons) {
+  for(const [k, mon] of chaoticMons) {
     const isNeutral = playerFaction === 'chaotic';
     const status = isNeutral ? '<span style="color:#44ccff">Neutral</span>' : '<span style="color:#ff4444">Hostile</span>';
-    html += `<div style="font-size:14px;font-family:'Share Tech Mono';padding:2px 8px;"><span style="color:${mon.color}">${mon.sym}</span> ${mon.name} — ${status} <span style="color:var(--gray)">(floor ${mon.floor[0]}-${mon.floor[1]})</span></div>`;
+    const monGlyph = useTileset && MONSTER_CHAR_ROW[k] !== undefined ? spriteHTML(getCharTileId(MONSTER_CHAR_ROW[k], 'd', 'idle'), 'character', 18) : `<span style="color:${mon.color}">${mon.sym}</span>`;
+    html += `<div style="font-size:14px;font-family:'Share Tech Mono';padding:2px 8px;">${monGlyph} ${mon.name} — ${status} <span style="color:var(--gray)">(floor ${mon.floor[0]}-${mon.floor[1]})</span></div>`;
   }
 
   html += `</div>`;
@@ -62,6 +82,7 @@ function openAlignmentScreen() {
   html += `</div>`;
 
   content.innerHTML = html;
+  renderInlineSprites(document.getElementById('alignment-content'));
   G.alignmentOpen = true;
 }
 
@@ -100,15 +121,17 @@ function openInventory() {
     div.className = 'inv-item';
     const dispName = getItemDisplayName(item);
     const showCursed = item.cursed && item.identified;
+    const itemGlyph = useTileset ? spriteHTML(typeof getItemWorldTile === 'function' ? (getItemWorldTile(item) || getItemTile(item)) : 231, typeof getItemWorldTile === 'function' && getItemWorldTile(item) !== undefined ? 'world' : 'classic', 18) : `<span style="color:${item.color||'var(--white)'}">${item.glyph||'?'}</span>`;
     div.innerHTML = `
       <span class="item-key">${key})</span>
-      <span style="color:${item.color||'var(--white)'}">${item.glyph||'?'}</span>
+      ${itemGlyph}
       <span class="item-name ${isEquipped?'equipped':''} ${showCursed?'item-cursed':''}">${dispName}${isEquipped?' (worn)':''}${showCursed?' ✗':''}</span>
     `;
     div.onclick = () => showItemDetail(item, i);
     listEl.appendChild(div);
   });
-  
+
+  renderInlineSprites(document.getElementById('inv-list'));
   G.invOpen = true;
   G.invSelectedIdx = null;
 }
@@ -976,9 +999,10 @@ function openConsumeMenu(itemType) {
     const key = String.fromCharCode(97 + i);
     const dname = getItemDisplayName(item);
     const realIdx = p.inventory.indexOf(item);
+    const itemGlyph = useTileset ? spriteHTML(typeof getItemWorldTile === 'function' ? (getItemWorldTile(item) || getItemTile(item)) : 231, typeof getItemWorldTile === 'function' && getItemWorldTile(item) !== undefined ? 'world' : 'classic', 18) : `<span style="color:${item.color||'var(--white)'}">${item.glyph||'?'}</span>`;
     html += `<div style="padding:5px 8px;cursor:pointer;font-size:18px;border-bottom:1px solid var(--border);" onclick="consumeMenuPick(${realIdx})">
       <span style="color:var(--amber)">${key})</span>
-      <span style="color:${item.color||'var(--white)'};margin-left:6px;">${item.glyph||'?'} ${dname}</span>
+      <span style="margin-left:6px;">${itemGlyph} ${dname}</span>
     </div>`;
   });
   html += `<button class="menu-btn" onclick="closeConsumeMenu()" style="margin-top:10px">Cancel (ESC)</button></div>`;
@@ -986,6 +1010,7 @@ function openConsumeMenu(itemType) {
   const modal = document.getElementById('modal');
   document.getElementById('modal-content').innerHTML = html;
   modal.style.display = 'flex';
+  renderInlineSprites(document.getElementById('modal-content'));
 }
 window.consumeMenuPick = function(idx) {
   const item = G.player.inventory[idx];
@@ -1011,9 +1036,10 @@ function openIdentifyMenu() {
     const key = String.fromCharCode(97 + i);
     const dname = getItemDisplayName(item);
     const realIdx = p.inventory.indexOf(item);
+    const itemGlyph = useTileset ? spriteHTML(typeof getItemWorldTile === 'function' ? (getItemWorldTile(item) || getItemTile(item)) : 231, typeof getItemWorldTile === 'function' && getItemWorldTile(item) !== undefined ? 'world' : 'classic', 18) : `<span style="color:${item.color||'var(--white)'}">${item.glyph||'?'}</span>`;
     html += `<div style="padding:5px 8px;cursor:pointer;font-size:18px;border-bottom:1px solid var(--border);" onclick="identifyMenuPick(${realIdx})">
       <span style="color:var(--amber)">${key})</span>
-      <span style="color:${item.color||'var(--white)'};margin-left:6px;">${item.glyph||'?'} ${dname}</span>
+      <span style="margin-left:6px;">${itemGlyph} ${dname}</span>
     </div>`;
   });
   html += `<button class="menu-btn" onclick="closeIdentifyMenu()" style="margin-top:10px">Cancel (ESC)</button></div>`;
@@ -1021,6 +1047,7 @@ function openIdentifyMenu() {
   const modal = document.getElementById('modal');
   document.getElementById('modal-content').innerHTML = html;
   modal.style.display = 'flex';
+  renderInlineSprites(document.getElementById('modal-content'));
 }
 window.identifyMenuPick = function(idx) {
   const item = G.player.inventory[idx];

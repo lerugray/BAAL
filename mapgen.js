@@ -408,14 +408,18 @@ function generateItem(floor) {
 
   const roll = rng.next();
   let pool;
-  if(roll < 0.25) pool = ['ration','bread','meat','fruit'];
-  else if(roll < 0.40) {
+  if(roll < 0.20) {
+    pool = ['ration','bread','meat','fruit','cheese','jerky','honeycomb','mushroom_food'];
+    if(floor >= 5) pool.push('royal_jelly');
+    if(floor >= 8) pool.push('elven_waybread');
+  }
+  else if(roll < 0.35) {
     pool = ['potion_heal','potion_mana','potion_str','potion_speed','potion_invis','potion_conf','potion_poison','potion_xp',
             'potion_blind','potion_weakness','potion_clarity','potion_might','potion_resist','potion_antidote','potion_restoration'];
     if(floor >= 4) pool.push('potion_mutagen','potion_paralyze','potion_amnesia','potion_fire','potion_berserk');
     if(floor >= 6) pool.push('potion_phasing');
   }
-  else if(roll < 0.55) pool = ['scroll_tele','scroll_id','scroll_mapping','scroll_fear','scroll_enchant_wpn','scroll_enchant_arm','scroll_curse','scroll_acquirement','scroll_remove_curse'];
+  else if(roll < 0.55) pool = ['scroll_tele','scroll_id','scroll_id','scroll_mapping','scroll_fear','scroll_enchant_wpn','scroll_enchant_arm','scroll_curse','scroll_acquirement','scroll_remove_curse'];
   else if(roll < 0.65) {
     pool = ['arrows','bolts','stones','throwing_knife','throwing_star'];
     if(floor >= 3) pool.push('javelin','throwing_axe');

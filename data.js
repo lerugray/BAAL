@@ -634,6 +634,12 @@ const ITEM_TEMPLATES = {
   bread: { name:'Bread', glyph:'%', color:'#ccaa66', type:'food', nutrition:500, val:2 },
   meat: { name:'Meat Chunk', glyph:'%', color:'#cc4444', type:'food', nutrition:600, val:1 },
   fruit: { name:'Strange Fruit', glyph:'%', color:'#ff8844', type:'food', nutrition:400, val:2, rng_effect:true },
+  cheese: { name:'Cheese Wheel', glyph:'%', color:'#ffdd44', type:'food', nutrition:450, val:2 },
+  jerky: { name:'Dried Jerky', glyph:'%', color:'#885533', type:'food', nutrition:350, val:1 },
+  honeycomb: { name:'Honeycomb', glyph:'%', color:'#ffcc22', type:'food', nutrition:300, val:3 },
+  mushroom_food: { name:'Cave Mushroom', glyph:'%', color:'#88aa66', type:'food', nutrition:250, val:1, rng_effect:true },
+  royal_jelly: { name:'Royal Jelly', glyph:'%', color:'#ff88cc', type:'food', nutrition:600, val:8 },
+  elven_waybread: { name:'Elven Waybread', glyph:'%', color:'#eeddbb', type:'food', nutrition:1000, val:12 },
   // Ammo
   arrows: { name:'Arrows', glyph:'/', color:'#aa8844', type:'ammo', slot:'ammo', count:20, dmgBonus:0, val:1 },
   bolts: { name:'Crossbow Bolts', glyph:'/', color:'#887755', type:'ammo', slot:'ammo', count:15, dmgBonus:1, val:2 },

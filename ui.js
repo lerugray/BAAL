@@ -444,11 +444,12 @@ function showCCStep(step) {
 function buildRaceGrid() {
   const grid = document.getElementById('race-grid');
   grid.innerHTML = '';
-  for(const [key, race] of Object.entries(RACES)) {
+  const raceEntries = Object.entries(RACES);
+  raceEntries.forEach(([key, race], i) => {
     const div = document.createElement('div');
     div.className = `char-option ${ccSelectedRace === key ? 'selected' : ''}`;
     div.innerHTML = `
-      <h3>${race.sym} ${race.name}</h3>
+      <h3><span style="color:var(--gray);font-size:14px;">${i+1}.</span> ${race.sym} ${race.name}</h3>
       <p>${race.desc}</p>
       <div class="bonus">Passives: ${race.passives.join(', ')}</div>
     `;
@@ -458,17 +459,19 @@ function buildRaceGrid() {
       setTimeout(() => showCCStep(2), 200);
     };
     grid.appendChild(div);
-  }
+  });
+  grid._entries = raceEntries; // store for keyboard access
 }
 
 function buildClassGrid() {
   const grid = document.getElementById('class-grid');
   grid.innerHTML = '';
-  for(const [key, cls] of Object.entries(CLASSES)) {
+  const classEntries = Object.entries(CLASSES);
+  classEntries.forEach(([key, cls], i) => {
     const div = document.createElement('div');
     div.className = `char-option ${ccSelectedClass === key ? 'selected' : ''}`;
     div.innerHTML = `
-      <h3>${cls.sym} ${cls.name}</h3>
+      <h3><span style="color:var(--gray);font-size:14px;">${i+1}.</span> ${cls.sym} ${cls.name}</h3>
       <p>${cls.desc}</p>
       <div class="bonus">HD: d${cls.hpDice} · ${cls.flavorText}</div>
     `;
@@ -478,7 +481,8 @@ function buildClassGrid() {
       setTimeout(() => showCCStep(3), 200);
     };
     grid.appendChild(div);
-  }
+  });
+  grid._entries = classEntries;
 }
 
 let ccSelectedGod = null;
@@ -579,7 +583,7 @@ function handleKey(e) {
       return; // let typing work in name input
     }
 
-    // Char creation steps 1 & 2 — Escape goes back
+    // Char creation steps 1 & 2 — number keys select, Escape goes back
     const ccScreen = document.getElementById('char-create-screen');
     if(ccScreen && isVisible(ccScreen)) {
       if(e.key === 'Escape') {
@@ -588,6 +592,33 @@ function handleKey(e) {
         if(step1 && isVisible(step1)) showTitleFromCC();
         else ccBack(1);
         return;
+      }
+      // Number keys to select race/class
+      const num = parseInt(e.key);
+      if(num >= 1 && num <= 9) {
+        const step1 = document.getElementById('cc-step1');
+        const step2 = document.getElementById('cc-step2');
+        if(step1 && isVisible(step1)) {
+          const raceGrid = document.getElementById('race-grid');
+          const entries = raceGrid?._entries;
+          if(entries && num <= entries.length) {
+            e.preventDefault();
+            ccSelectedRace = entries[num-1][0];
+            buildRaceGrid();
+            setTimeout(() => showCCStep(2), 200);
+            return;
+          }
+        } else if(step2 && isVisible(step2)) {
+          const classGrid = document.getElementById('class-grid');
+          const entries = classGrid?._entries;
+          if(entries && num <= entries.length) {
+            e.preventDefault();
+            ccSelectedClass = entries[num-1][0];
+            buildClassGrid();
+            setTimeout(() => showCCStep(3), 200);
+            return;
+          }
+        }
       }
     }
 

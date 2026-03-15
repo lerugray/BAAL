@@ -469,6 +469,15 @@ const PLAYER_RACE_ROW = {
   dwarf: 16,
 };
 
+// Race tint colors — applied as a semi-transparent overlay on the player sprite
+const RACE_TINT = {
+  halforc:  'rgba(60, 120, 40, 0.25)',
+  tiefling: 'rgba(160, 40, 40, 0.25)',
+  lizardman:'rgba(40, 140, 60, 0.3)',
+  gnome:    'rgba(100, 80, 160, 0.15)',
+  halfling: 'rgba(160, 140, 80, 0.1)',
+};
+
 // --- Item → world tile mapping (Remaster) ---
 // More specific mappings by template key, falling back to glyph
 const ITEM_KEY_WORLD_TILE = {
@@ -620,6 +629,10 @@ function getPlayerEntityInfo() {
   if(row === undefined) row = PLAYER_CHAR_ROW[p.cls] || 10;
   const info = { charRow: row, facing: p.facing || 'd', animState: p.animState || 'idle' };
   info.classicTile = TILE_MAP.player; // fallback
+  // Race tinting (only if using class sprite, not race-specific sprite)
+  if(!PLAYER_RACE_ROW[p.race] && RACE_TINT[p.race]) {
+    info.tint = RACE_TINT[p.race];
+  }
   return info;
 }
 
@@ -717,6 +730,13 @@ function drawEntity(px, py, ch, color, entityInfo) {
   if(entityInfo.charRow !== undefined && SHEETS.character.ready) {
     const tileId = getCharTileId(entityInfo.charRow, entityInfo.facing || 'd', entityInfo.animState || 'idle');
     drawFromSheet('character', tileId, px, py);
+    // Apply race tint if specified
+    if(entityInfo.tint) {
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.fillStyle = entityInfo.tint;
+      ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+      ctx.globalCompositeOperation = 'source-over';
+    }
     return;
   }
 

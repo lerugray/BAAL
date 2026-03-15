@@ -2197,8 +2197,12 @@ function endTurn() {
   if(p.status.haste > 0 && G.turn % 2 === 0) {
     p._bonusAction = true;
   }
-  // Hawk form: bonus action every other turn (fast movement)
+  // Hawk form: bonus action every other turn (fastest)
   if(p._hawkSpeed && G.turn % 2 === 1) {
+    p._bonusAction = true;
+  }
+  // Wolf form: bonus action every 3rd turn (fast)
+  if(p._wolfSpeed && G.turn % 3 === 0) {
     p._bonusAction = true;
   }
 
@@ -2484,13 +2488,16 @@ function applyShapeshift(form) {
 
   if(form === 1) { // Wolf
     p.stats.str += 3;
-    p.stats.dex += 2;
+    p.stats.dex += 4;
     p.baseAC -= 2;
+    p._wolfSpeed = true;
     log('You transform into a wolf! Fast and fierce.', 'good');
   } else if(form === 2) { // Bear
     const hpBoost = Math.floor(p.maxHp * 0.5);
     p.maxHp += hpBoost;
     p.hp += hpBoost;
+    p.stats.str += 4;
+    p.stats.con += 3;
     p.baseAC += 4;
     log('You transform into a bear! Tough and mighty.', 'good');
   } else if(form === 3) { // Hawk
@@ -2519,6 +2526,7 @@ function revertShapeshift() {
   delete p.status.shiftForm;
   delete p.status.fly;
   delete p._hawkSpeed;
+  delete p._wolfSpeed;
   log('You return to your natural form.', 'info');
 }
 
@@ -3171,6 +3179,7 @@ function useItem(item) {
   }
   
   if(item.type === 'potion') {
+    if(typeof SFX !== 'undefined') SFX.pickup();
     applyPotion(item);
     p.inventory = p.inventory.filter(i => i !== item);
     endTurn();
@@ -3178,6 +3187,7 @@ function useItem(item) {
   }
   
   if(item.type === 'scroll') {
+    if(typeof SFX !== 'undefined') SFX.paper();
     applyScroll(item);
     p.inventory = p.inventory.filter(i => i !== item);
     gainPiety('reading_scrolls', 1);

@@ -802,7 +802,17 @@ function handleKey(e) {
   if(G.invOpen) { handleInvKey(e); return; }
   if(G.spellOpen) { handleSpellKey(e); return; }
   if(G.consumeMenuOpen) {
-    if(e.key === 'Escape') closeConsumeMenu();
+    if(e.key === 'Escape') { closeConsumeMenu(); return; }
+    const sc = e.key.charCodeAt(0);
+    if(sc >= 97 && sc <= 122) {
+      const idx = sc - 97;
+      const items = G.player.inventory.filter(i => i.type === G._consumeType);
+      if(items[idx]) {
+        const realIdx = G.player.inventory.indexOf(items[idx]);
+        closeConsumeMenu();
+        useItem(G.player.inventory[realIdx]);
+      }
+    }
     return;
   }
   if(G.identifyMenuOpen) {
@@ -1091,6 +1101,7 @@ function openConsumeMenu(itemType) {
   });
   html += `<button class="menu-btn" onclick="closeConsumeMenu()" style="margin-top:10px">Cancel (ESC)</button></div>`;
   G.consumeMenuOpen = true;
+  G._consumeType = itemType;
   const modal = document.getElementById('modal');
   document.getElementById('modal-content').innerHTML = html;
   modal.style.display = 'flex';

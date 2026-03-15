@@ -697,6 +697,40 @@ function handleKey(e) {
     return;
   }
 
+  // Ranged targeting mode
+  if(G.targetMode) {
+    e.preventDefault();
+    if(e.key === 'Escape') {
+      G.targetMode = false;
+      log('Targeting cancelled.', 'info');
+      renderAll();
+      return;
+    }
+    if(e.key === 'Tab' || e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      G._targetIdx = (G._targetIdx + 1) % G._targetList.length;
+      const t = G._targetList[G._targetIdx];
+      G.lookX = t.x; G.lookY = t.y;
+      log(`Targeting ${t.name}.`, 'system');
+      renderAll();
+      if(typeof overlayLookBox === 'function') overlayLookBox();
+      return;
+    }
+    if(e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      G._targetIdx = (G._targetIdx - 1 + G._targetList.length) % G._targetList.length;
+      const t = G._targetList[G._targetIdx];
+      G.lookX = t.x; G.lookY = t.y;
+      log(`Targeting ${t.name}.`, 'system');
+      renderAll();
+      if(typeof overlayLookBox === 'function') overlayLookBox();
+      return;
+    }
+    if(e.key === 'f' || e.key === 'F' || e.key === 'Enter') {
+      confirmFire();
+      return;
+    }
+    return;
+  }
+
   // Stair-find mode (Shift+X, then < or > to cycle stairs, Enter to auto-travel)
   if(G.stairFindMode) {
     e.preventDefault();

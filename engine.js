@@ -3604,20 +3604,38 @@ function fireRanged() {
   const weapon = p.equipped.ranged || (p.equipped.weapon?.ranged ? p.equipped.weapon : null);
   if(!weapon || !weapon.ranged) { log('You have no ranged weapon equipped!', 'warning'); return; }
 
+  // Enter targeting mode
+  const visMonsters = G.level.monsters.filter(m =>
+    !m.neutral && !m.disguised && G.level.visible?.has(`${m.x},${m.y}`)
+  ).sort((a,b) =>
+    Math.sqrt((a.x-p.x)**2+(a.y-p.y)**2) - Math.sqrt((b.x-p.x)**2+(b.y-p.y)**2)
+  );
+  if(visMonsters.length === 0) { log('No targets in sight!', 'warning'); return; }
+
+  G.targetMode = true;
+  G._targetList = visMonsters;
+  G._targetIdx = 0;
+  G._targetWeapon = weapon;
+  G.lookX = visMonsters[0].x;
+  G.lookY = visMonsters[0].y;
+  log(`Targeting ${visMonsters[0].name}. Tab/arrows to cycle, f/Enter to fire, ESC to cancel.`, 'system');
+  renderAll();
+  if(typeof overlayLookBox === 'function') overlayLookBox();
+  return;
+}
+
+function confirmFire() {
+  const p = G.player;
+  const weapon = G._targetWeapon;
+  const target = G._targetList?.[G._targetIdx];
+  G.targetMode = false;
+  if(!target || !weapon) return;
+
   if(weapon.type === 'wand') {
     if(weapon.charges <= 0) { log('The wand is empty!', 'warning'); return; }
     weapon.charges--;
-    // Identify wand on first use
-    if(!weapon.identified) {
-      identifyItem(weapon);
-      log(`It's a ${weapon.name}!`, 'good');
-    }
-    // 10% fizzle chance
-    if(rng.bool(0.1)) {
-      log('The wand fizzles and sputters!', 'warning');
-      endTurn();
-      return;
-    }
+    if(!weapon.identified) { identifyItem(weapon); log(`It's a ${weapon.name}!`, 'good'); }
+    if(rng.bool(0.1)) { log('The wand fizzles and sputters!', 'warning'); endTurn(); return; }
     fireWand(weapon);
     return;
   }
@@ -3626,9 +3644,6 @@ function fireRanged() {
   if(!ammo || ammo.count <= 0) { log('No ammunition!', 'warning'); return; }
   ammo.count--;
   if(ammo.count <= 0) { p.equipped.ammo = null; }
-
-  const target = getNearestMonster();
-  if(!target) { log('No target in sight!', 'warning'); return; }
 
   const calledShotBonus = p.status.called_shot ? 4 : 0;
   const atkBonus = getAttackBonus(p) + (p.cls === 'fightingman' ? Math.floor(p.stats.dex/4) : 0) + calledShotBonus;

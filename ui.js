@@ -122,10 +122,11 @@ function openInventory() {
     const dispName = getItemDisplayName(item);
     const showCursed = item.cursed && item.identified;
     const itemGlyph = useTileset ? spriteHTML(typeof getItemWorldTile === 'function' ? (getItemWorldTile(item) || getItemTile(item)) : 231, typeof getItemWorldTile === 'function' && getItemWorldTile(item) !== undefined ? 'world' : 'classic', 18) : `<span style="color:${item.color||'var(--white)'}">${item.glyph||'?'}</span>`;
+    const countStr = item.count ? ` (${item.count})` : '';
     div.innerHTML = `
       <span class="item-key">${key})</span>
       ${itemGlyph}
-      <span class="item-name ${isEquipped?'equipped':''} ${showCursed?'item-cursed':''}">${dispName}${isEquipped?' (worn)':''}${showCursed?' ✗':''}</span>
+      <span class="item-name ${isEquipped?'equipped':''} ${showCursed?'item-cursed':''}">${dispName}${countStr}${isEquipped?' (worn)':''}${showCursed?' ✗':''}</span>
     `;
     div.onclick = () => showItemDetail(item, i);
     listEl.appendChild(div);
@@ -903,8 +904,8 @@ function handleKey(e) {
     return;
   }
 
-  // Cancel auto-explore, auto-travel, or resting on any movement key
-  if(moveKeys[key] && (G.autoExploreActive || G.restingActive || G.autoTravelPath)) {
+  // Cancel auto-explore, auto-travel, or resting on any key press
+  if(G.autoExploreActive || G.restingActive || G.autoTravelPath) {
     e.preventDefault();
     G.autoExploreActive = false;
     G.restingActive = false;

@@ -95,49 +95,50 @@ function initPlayer(race, cls, name) {
   const spells = [...classData.spells.slice(0, 2)]; // Start with first 2, learn more by leveling
   
   // Starting equipment
+  const si = (key, id) => ({ ...ITEM_TEMPLATES[key], id, templateKey: key });
   const startItems = [];
-  startItems.push({ ...ITEM_TEMPLATES.ration, id:'start_food1' });
-  startItems.push({ ...ITEM_TEMPLATES.ration, id:'start_food2' });
+  startItems.push(si('ration','start_food1'));
+  startItems.push(si('ration','start_food2'));
   if(cls === 'fightingman') {
-    startItems.push({ ...ITEM_TEMPLATES.shortsword, id:'start_wpn' });
-    startItems.push({ ...ITEM_TEMPLATES.leather, id:'start_arm' });
-    startItems.push({ ...ITEM_TEMPLATES.shield, id:'start_sh' });
-    startItems.push({ ...ITEM_TEMPLATES.shortbow, id:'start_bow' });
-    startItems.push({ ...ITEM_TEMPLATES.arrows, id:'start_arrows' });
+    startItems.push(si('shortsword','start_wpn'));
+    startItems.push(si('leather','start_arm'));
+    startItems.push(si('shield','start_sh'));
+    startItems.push(si('shortbow','start_bow'));
+    startItems.push(si('arrows','start_arrows'));
   } else if(cls === 'cleric') {
-    startItems.push({ ...ITEM_TEMPLATES.mace, id:'start_wpn' });
-    startItems.push({ ...ITEM_TEMPLATES.leather, id:'start_arm' });
-    startItems.push({ ...ITEM_TEMPLATES.shield, id:'start_sh' });
-    startItems.push({ ...ITEM_TEMPLATES.potion_heal, id:'start_pot' });
+    startItems.push(si('mace','start_wpn'));
+    startItems.push(si('leather','start_arm'));
+    startItems.push(si('shield','start_sh'));
+    startItems.push(si('potion_heal','start_pot'));
   } else if(cls === 'magicuser') {
-    startItems.push({ ...ITEM_TEMPLATES.dagger, id:'start_wpn' });
-    startItems.push({ ...ITEM_TEMPLATES.robes, id:'start_arm' });
-    startItems.push({ ...ITEM_TEMPLATES.potion_mana, id:'start_pot1' });
-    startItems.push({ ...ITEM_TEMPLATES.potion_mana, id:'start_pot2' });
-    startItems.push({ ...ITEM_TEMPLATES.scroll_id, id:'start_scroll' });
+    startItems.push(si('dagger','start_wpn'));
+    startItems.push(si('robes','start_arm'));
+    startItems.push(si('potion_mana','start_pot1'));
+    startItems.push(si('potion_mana','start_pot2'));
+    startItems.push(si('scroll_id','start_scroll'));
   } else if(cls === 'thief') {
-    startItems.push({ ...ITEM_TEMPLATES.dagger, id:'start_wpn' });
-    startItems.push({ ...ITEM_TEMPLATES.leather, id:'start_arm' });
-    startItems.push({ ...ITEM_TEMPLATES.dagger, id:'start_wpn2' });
+    startItems.push(si('dagger','start_wpn'));
+    startItems.push(si('leather','start_arm'));
+    startItems.push(si('dagger','start_wpn2'));
   } else if(cls === 'druid') {
-    startItems.push({ ...ITEM_TEMPLATES.staff, id:'start_wpn' });
-    startItems.push({ ...ITEM_TEMPLATES.leather, id:'start_arm' });
-    startItems.push({ ...ITEM_TEMPLATES.ration, id:'start_food3' });
+    startItems.push(si('staff','start_wpn'));
+    startItems.push(si('leather','start_arm'));
+    startItems.push(si('ration','start_food3'));
   } else if(cls === 'ranger') {
-    startItems.push({ ...ITEM_TEMPLATES.shortbow, id:'start_bow' });
-    startItems.push({ ...ITEM_TEMPLATES.arrows, id:'start_arrows' });
-    startItems.push({ ...ITEM_TEMPLATES.arrows, id:'start_arrows2' });
-    startItems.push({ ...ITEM_TEMPLATES.leather, id:'start_arm' });
-    startItems.push({ ...ITEM_TEMPLATES.dagger, id:'start_wpn' });
+    startItems.push(si('shortbow','start_bow'));
+    startItems.push(si('arrows','start_arrows'));
+    startItems.push(si('arrows','start_arrows2'));
+    startItems.push(si('leather','start_arm'));
+    startItems.push(si('dagger','start_wpn'));
   } else if(cls === 'warlock') {
-    startItems.push({ ...ITEM_TEMPLATES.dagger, id:'start_wpn' });
-    startItems.push({ ...ITEM_TEMPLATES.potion_mana, id:'start_pot1' });
-    startItems.push({ ...ITEM_TEMPLATES.potion_mana, id:'start_pot2' });
+    startItems.push(si('dagger','start_wpn'));
+    startItems.push(si('potion_mana','start_pot1'));
+    startItems.push(si('potion_mana','start_pot2'));
   }
-  
+
   // Race starting item
-  if(race === 'halfling') startItems.push({ ...ITEM_TEMPLATES.sling, id:'race_wpn' });
-  if(race === 'lizardman') startItems.push({ ...ITEM_TEMPLATES.meat, id:'race_food' });
+  if(race === 'halfling') startItems.push(si('sling','race_wpn'));
+  if(race === 'lizardman') startItems.push(si('meat','race_food'));
   
   const player = {
     name, race, cls,
@@ -737,9 +738,17 @@ function checkTrap(x, y) {
   if(p.hp <= 0) die(`a ${trap.subtype}`);
 }
 
+function hasMatchingRanged(ammoKey) {
+  const p = G.player;
+  const wpn = p.equipped.weapon;
+  if(wpn && wpn.ammo === ammoKey) return true;
+  return p.inventory.some(i => i.type === 'weapon' && i.ammo === ammoKey);
+}
+
 function shouldAutoPickup(item) {
   if(item.type === 'gold') return true;
-  if(item.type === 'food' || item.type === 'ammo' || item.type === 'thrown') return true;
+  if(item.type === 'food' || item.type === 'thrown') return true;
+  if(item.type === 'ammo') return hasMatchingRanged(item.templateKey || item.name?.toLowerCase().replace(/\s/g,'_'));
   if(item.type === 'quest_item' || item.type === 'rune_artifact') return true;
   if(item.type === 'potion') {
     // Skip if identified as bad
@@ -781,8 +790,18 @@ function autoPickup(x, y) {
       continue;
     }
 
-    // Pick up without identifying
+    // Stack ammo and thrown items
     const dname = getItemDisplayName(item);
+    if((item.type === 'ammo' || item.type === 'thrown') && item.count) {
+      const existing = p.inventory.find(i => i.name === item.name && (i.type === 'ammo' || i.type === 'thrown'));
+      if(existing) {
+        existing.count += item.count;
+        log(`You pick up ${dname}. (${existing.count} total)`, 'loot');
+        if(typeof SFX !== 'undefined') SFX.pickup();
+        G.level.items = G.level.items.filter(i => i !== item);
+        continue;
+      }
+    }
     p.inventory.push(item);
     log(`You pick up ${dname}.`, 'loot');
     if(typeof SFX !== 'undefined') SFX.pickup();
@@ -2253,7 +2272,8 @@ function endTurn() {
 // Returns true if auto-explore should pick up this item
 function autoExploreWantsItem(item) {
   if(item.type === 'gold') return true;
-  if(item.type === 'food' || item.type === 'ammo' || item.type === 'thrown') return true;
+  if(item.type === 'food' || item.type === 'thrown') return true;
+  if(item.type === 'ammo') return hasMatchingRanged(item.templateKey || item.name?.toLowerCase().replace(/\s/g,'_'));
   if(item.type === 'quest_item' || item.type === 'rune_artifact') return true;
   if(item.type === 'potion') {
     // Pick up if unidentified or known to be beneficial

@@ -1192,8 +1192,16 @@ function doRestTick() {
 function autoAttack() {
   const target = getNearestMonster();
   if(!target) { log('No enemies nearby.', 'info'); return; }
-  attackMonster(target);
-  endTurn();
+  const dist = Math.sqrt((target.x-G.player.x)**2+(target.y-G.player.y)**2);
+  if(dist <= 1.5) {
+    // Adjacent — attack
+    attackMonster(target);
+    endTurn();
+  } else {
+    // Not adjacent — move toward
+    const moved = tryMove(Math.sign(target.x-G.player.x), Math.sign(target.y-G.player.y));
+    if(moved) endTurn();
+  }
 }
 
 // ─── COMPANION CHAT ──────────────────────────────────────────

@@ -936,10 +936,10 @@ function handleKey(e) {
     case 'm': case '`': case '~':
       openMutScreen();
       break;
-    case '>':
+    case '>': case '+':
       descend();
       break;
-    case '<':
+    case '<': case '-':
       ascend();
       break;
     case ',':

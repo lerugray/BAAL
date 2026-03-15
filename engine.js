@@ -168,6 +168,13 @@ function initPlayer(race, cls, name) {
     blessActive: false,
   };
   
+  // Auto-equip starting gear
+  for(const item of player.inventory) {
+    if(item.slot && !player.equipped[item.slot]) {
+      player.equipped[item.slot] = item;
+    }
+  }
+
   // Cleric starts with a chosen faith (handled in char creation step or default)
   if(cls === 'cleric' && G._startingGod) {
     player.god = G._startingGod;

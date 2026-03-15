@@ -426,9 +426,11 @@ function generateItem(floor) {
   }
   else {
     // Equipment — weighted by floor
-    const wpnPool = ['dagger','shortsword','longsword','mace','waraxe','shortbow','sling','flail','morningstar'];
-    if(floor >= 4) wpnPool.push('greatsword','crossbow','longbow','spear','falchion','battleaxe');
-    if(floor >= 7) wpnPool.push('staff','warhammer','halberd');
+    const wpnPool = ['dagger','shortsword','sling'];
+    if(floor >= 2) wpnPool.push('mace','shortbow','spear');
+    if(floor >= 4) wpnPool.push('longsword','waraxe','flail','crossbow');
+    if(floor >= 6) wpnPool.push('morningstar','greatsword','longbow','falchion','battleaxe');
+    if(floor >= 8) wpnPool.push('staff','warhammer','halberd');
     if(floor >= 9) wpnPool.push('wand_fire','wand_cold','wand_lightning');
     if(floor >= 11) wpnPool.push('wand_poison','wand_sleep','wand_digging','wand_polymorph');
     const armPool = ['leather','shield'];

@@ -537,7 +537,8 @@ function ccPickGod(godKey) {
 function startGame() {
   if(!ccSelectedRace || !ccSelectedClass) { alert('Select race and class!'); return; }
   const nameVal = document.getElementById('name-input').value.trim();
-  const name = nameVal || rng.pick(['Alaric','Brynn','Corvus','Dagna','Emric','Faelan','Gorin','Hessa']);
+  const randomNames = ['Alaric','Brynn','Corvus','Dagna','Emric','Faelan','Gorin','Hessa','Kael','Lyra','Mordain','Nyx','Orin','Petra','Quillan','Riven','Sable','Thorn','Ulric','Vex','Wren','Zara'];
+  const name = nameVal || randomNames[Math.floor(Math.random() * randomNames.length)];
   
   // Pass chosen god for cleric
   if((ccSelectedClass === 'cleric' || ccSelectedClass === 'warlock') && ccSelectedGod) {

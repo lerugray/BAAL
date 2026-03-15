@@ -132,7 +132,8 @@ function getItemDisplayName(item) {
     const look = tkey ? (GAME_WAND_LOOKS[tkey] || 'plain') : 'plain';
     return `${look} wand`;
   }
-  return item.name;
+  if(item.type === 'gold') return `${item.amount || 0} gold`;
+  return item.name || 'unknown item';
 }
 
 function identifyItem(item) {

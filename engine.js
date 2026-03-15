@@ -4268,18 +4268,18 @@ function interactNPC(npc) {
   } else if(npc.role === 'merchant') {
     openShop();
   } else if(npc.role === 'sage') {
-    if(p.gold >= 20) {
-      const unidentified = p.inventory.filter(i => !i.identified);
-      if(unidentified.length > 0) {
+    const unidentified = p.inventory.filter(i => !i.identified);
+    if(unidentified.length === 0) {
+      log(`${npc.name}: "All your items are already known to you."`, 'info');
+    } else if(p.gold < 20) {
+      log(`${npc.name}: "20 gold per identification. Come back when you can pay."`, 'info');
+    } else {
+      if(confirm(`${npc.name} offers to identify an item for 20gp.\nYou have ${unidentified.length} unidentified item${unidentified.length>1?'s':''}. Proceed?`)) {
         p.gold -= 20;
         const item = unidentified[0];
         identifyItem(item);
-        log(`Mervyn identifies your ${item.name} for 20gp.`, 'info');
-      } else {
-        log('Mervyn: "All your items are already known to you."', 'info');
+        log(`${npc.name} identifies your ${item.name} for 20gp.`, 'info');
       }
-    } else {
-      log('Mervyn: "20 gold for identification. Come back when you can pay."', 'info');
     }
   }
 }

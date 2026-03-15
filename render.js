@@ -479,7 +479,7 @@ const MONSTER_CHAR_ROW = {
   rat: 34, bat: 38, spider: 35, kobold: 20, goblin: 20,
   orc: 27, orc_warrior: 27, skeleton: 22, zombie: 26, gnoll: 31,
   viper: 32, cave_worm: 32, giant_ant: 35, jackal: 36,
-  grey_ooze: 33, ochre_jelly: 33, ghost_player: 41, wraith: 41,
+  grey_ooze: 33, ochre_jelly: 33, ghost_player: 41, ghost: 41, wraith: 41,
   fire_elemental: 42, ice_elemental: 43, earth_elemental: 28,
   devil_imp: 39, devil_pit: 30, mind_flayer: 29,
   lich: 25, death_knight: 23, balor: 30, shadow_demon: 41,

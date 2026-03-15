@@ -777,7 +777,7 @@ function autoPickup(x, y) {
       log(`You pick up ${item.amount} gold.`, 'loot');
       if(typeof SFX !== 'undefined') SFX.gold();
       G.level.items = G.level.items.filter(i => i !== item);
-      gainPiety('collecting_gold', 1);
+      gainPiety('collecting_gold', 0.2);
       continue;
     }
 
@@ -1050,8 +1050,8 @@ function attackMonster(monster) {
     log(msg, 'combat');
     if(typeof SFX !== 'undefined') { crit ? SFX.critHit() : SFX.hit(); }
     
-    gainPiety('kills', 0.5);
-    gainPiety('honorable_combat', 0.3);
+    gainPiety('kills', 0.2);
+    gainPiety('honorable_combat', 0.1);
 
     // Unique weapon effects
     if(wpn?.coldDamage) {
@@ -1166,7 +1166,7 @@ function monsterAttack(monster) {
         p.stats[stat] -= drain;
         log(`${monster.name} drains your ${stat.toUpperCase()} by ${drain}!`, 'warning');
         if(p.stats[stat] <= 0) { die(`stat drain from ${monster.name}`); return; }
-        gainPiety('taking_damage', 1);
+        gainPiety('taking_damage', 0.3);
       }
       
       // Status effects
@@ -1209,7 +1209,7 @@ function monsterAttack(monster) {
       }
       
       if(p.hp <= 0) { die(monster.name); return; }
-      gainPiety('taking_damage', 1);
+      gainPiety('taking_damage', 0.3);
 
       // Aegis Shield reflect
       if(p.equipped.offhand?.reflectDamage && dmg > 0) {
@@ -1261,8 +1261,8 @@ function killMonster(monster) {
   log(`You kill ${monster.name}!`, 'good');
   if(typeof SFX !== 'undefined') SFX.kill();
   gainXP(monster.xp);
-  gainPiety('kills', 2);
-  gainPiety('killing_evil', monster.undead ? 3 : 1);
+  gainPiety('kills', 0.5);
+  gainPiety('killing_evil', monster.undead ? 1 : 0.3);
 
   // Companion XP sharing — nearby companions gain XP
   for(const comp of p.companions) {
@@ -1347,7 +1347,7 @@ function killMonster(monster) {
   
   // Ghost pact (Nephthys)
   if(monster.isGhost && p.god === 'nephthys') {
-    gainPiety('honoring_ghost_kills', 5);
+    gainPiety('honoring_ghost_kills', 2);
     log('Nephthys is pleased by your dominance over the ghost.', 'god');
   }
 }
@@ -1596,8 +1596,8 @@ function moveToward(monster, tx, ty) {
   const dx = Math.sign(tx - monster.x);
   const dy = Math.sign(ty - monster.y);
   
-  // Try diagonal first, then cardinal
-  const moves = [[dx,dy],[dx,0],[0,dy],[-dy,dx],[dy,-dx]];
+  // Try diagonal first, then cardinal, then perpendicular, then reverse
+  const moves = [[dx,dy],[dx,0],[0,dy],[-dy,dx],[dy,-dx],[-dx,dy],[-dy,-dx],[dx,-dy],[-dx,0],[0,-dy]];
   
   for(const [mx, my] of moves) {
     const nx = monster.x + mx;
@@ -1801,7 +1801,7 @@ function tryGrantMutation(source) {
   
   // Zagyg loves mutations
   if(p.god === 'zagyg') {
-    gainPiety('mutating', 8);
+    gainPiety('mutating', 2);
     log('Zagyg cackles with delight!', 'god');
   }
   
@@ -2562,7 +2562,7 @@ function castSpell(spellKey) {
   }
   
   p.mp -= spell.mp;
-  gainPiety('casting_spells', 1);
+  gainPiety('casting_spells', 0.3);
   if(typeof SFX !== 'undefined') {
     if(spell.effect === 'heal' || spell.effect === 'heal_full') SFX.heal();
     else if(spell.effect === 'fireball' || spell.effect === 'fire_bolt') SFX.fire();
@@ -2832,7 +2832,7 @@ function castSpell(spellKey) {
       etarget.hp -= edmg;
       log(`Eldritch energy strikes ${etarget.name} for ${edmg} damage!`, 'combat');
       if(typeof addTileEffect === 'function') addTileEffect(etarget.x, etarget.y, [170,60,200], 300);
-      gainPiety('casting_spells', 2);
+      gainPiety('casting_spells', 0.5);
       if(etarget.hp <= 0) killMonster(etarget);
       break;
     }
@@ -2851,7 +2851,7 @@ function castSpell(spellKey) {
       p.hp -= sacrifice;
       p.mp = Math.min(p.maxMp, p.mp + restore);
       log(`You sacrifice ${sacrifice} HP and restore ${restore} MP!`, 'warning');
-      gainPiety('taking_damage', 3);
+      gainPiety('taking_damage', 1);
       break;
     }
     case 'soul_drain': {
@@ -2932,6 +2932,7 @@ function gainPiety(action, amount) {
   if(p.piety === 25) grantGodGift(1);
   if(p.piety === 50) grantGodGift(2);
   if(p.piety === 75) grantGodGift(3);
+  if(p.piety === 100) grantGodGift(4);
 }
 
 function grantGodGift(tier) {
@@ -2947,8 +2948,26 @@ function grantGodGift(tier) {
     case 'dragon_scales': p.baseAC += 3; log(`${god.name} grants you draconic scales! AC +3`, 'god'); break;
     case 'weapon_enchant':
       const wpn = p.equipped.weapon;
-      if(wpn) { wpn.enchant = (wpn.enchant||0)+1; log(`${god.name} enchants your ${wpn.name}!`, 'god'); }
+      if(wpn) { wpn.enchant = (wpn.enchant||0)+2; log(`${god.name} enchants your ${wpn.name}!`, 'god'); }
       break;
+    case 'radiant_smite': p.status.radiant_smite = 999; log(`${god.name} grants radiant smite — your attacks burn the unholy!`, 'god'); break;
+    case 'divine_shield': p.status.divine_shield = 999; log(`${god.name} wraps you in a divine shield! Damage halved.`, 'god'); break;
+    case 'inspire_allies': p.companions.forEach(c => { c.maxHp += 10; c.hp += 10; }); log(`${god.name} strengthens your companions!`, 'god'); break;
+    case 'plague_weapon': p.status.plague_weapon = 999; log(`${god.name} coats your weapon in plague! Attacks poison enemies.`, 'god'); break;
+    case 'frenzy': p.status.frenzy = 999; log(`${god.name} fills you with bloodlust! Attack speed doubled.`, 'god'); break;
+    case 'bloody_regeneration': p.status.bloody_regen = 999; log(`${god.name} grants regeneration through slaughter!`, 'god'); break;
+    case 'identify_all':
+      p.inventory.forEach(i => { if(!i.identified) identifyItem(i); });
+      log(`${god.name} reveals the nature of all your possessions!`, 'god');
+      break;
+    case 'ghost_knowledge': p.status.detect_monsters = 999; log(`${god.name} grants omniscient sight — all creatures are revealed!`, 'god'); break;
+    case 'iron_skin': p.baseAC += 5; log(`${god.name} turns your skin to iron! AC +5`, 'god'); break;
+    case 'rust_immunity': p.status.rust_immune = 999; log(`${god.name} protects your equipment from corrosion!`, 'god'); break;
+    case 'fear_aura': p.status.fear_aura = 999; log(`${god.name} grants a terrifying presence! Weak foes flee from you.`, 'god'); break;
+    case 'death_ward': p.freeDeath = true; log(`${god.name} grants a death ward — you will cheat death once!`, 'god'); break;
+    case 'unseen_passage': p.status.permanent_invis = 999; log(`${god.name} shrouds you in eternal shadow!`, 'god'); break;
+    case 'chaos_immunity': p.status.chaos_immune = 999; log(`${god.name} makes you immune to chaos effects!`, 'god'); break;
+    case 'wild_magic': p.status.wild_magic = 999; log(`${god.name} infuses you with wild magic — spells have random bonus effects!`, 'god'); break;
     default:
       // Heal
       const heal = rng.int(10, 30);
@@ -3157,7 +3176,7 @@ function prayGod() {
     return;
   }
   // Prayer: gain small piety, chance of gift
-  gainPiety('prayer', 2);
+  gainPiety('prayer', 1);
   const godAlign = GODS[p.god].alignment;
   if(godAlign === 'lawful') shiftAlignment(1, 'prayer');
   else if(godAlign === 'chaotic') shiftAlignment(-1, 'prayer');

@@ -2542,6 +2542,13 @@ function castSpell(spellKey) {
     return;
   }
 
+  // Reverting shapeshift is free
+  if(spell.effect === 'shapeshift' && p.status.shifted) {
+    revertShapeshift();
+    endTurn();
+    return;
+  }
+
   if(spell.mp > 0 && p.mp < spell.mp) {
     log('Not enough mana!', 'warning');
     return;

@@ -224,7 +224,7 @@ const CLASSES = {
     abilities: ['power_strike','steady_aim','formation_bonus','cleave'],
     spells: [],
     weaponBonus: 1, armorTypes: ['all'],
-    xpTable: [0,2000,4000,8000,16000,32000,64000,120000,240000,360000,480000,600000,720000,840000,960000,1080000],
+    xpTable: [0,100,250,500,1000,2000,4000,8000,16000,30000,50000,75000,100000,130000,165000,200000],
     flavorText: 'When the monster charges and the magic fails, you\'ll want one of these.'
   },
   cleric: {
@@ -236,7 +236,7 @@ const CLASSES = {
     abilities: ['turn_undead','lay_on_hands','divine_smite','sanctuary'],
     spells: ['cure_light','bless','cure_poison','sanctuary_spell','smite','hold_undead','flame_strike','word_of_recall'],
     weaponBonus: 0, armorTypes: ['all'],
-    xpTable: [0,1500,3000,6000,12000,25000,50000,100000,200000,300000,400000,500000,600000,700000,800000,900000],
+    xpTable: [0,80,200,400,800,1600,3200,6500,13000,25000,42000,62000,85000,110000,140000,170000],
     flavorText: 'Your god grants you power. Try not to disappoint them.'
   },
   magicuser: {
@@ -248,7 +248,7 @@ const CLASSES = {
     abilities: ['arcane_surge','spell_memory','metamagic','identify_item'],
     spells: ['magic_missile','detect_monsters','arcane_shield','sleep','burning_hands','haste','ice_lance','lightning_bolt','fireball','polymorph','disintegrate'],
     weaponBonus: 0, armorTypes: ['robes','cloth'],
-    xpTable: [0,2500,5000,10000,20000,40000,80000,150000,300000,450000,600000,750000,900000,1050000,1200000,1350000],
+    xpTable: [0,120,300,600,1200,2500,5000,10000,20000,35000,55000,80000,110000,145000,185000,230000],
     flavorText: 'The pen is mightier than the sword, unless the pen IS a fireball.'
   },
   thief: {
@@ -260,7 +260,7 @@ const CLASSES = {
     abilities: ['backstab','trap_mastery','lockpick'],
     spells: ['backstab_strike','smoke_bomb','poison_blade','shadow_step','detect_traps'],
     weaponBonus: 0, armorTypes: ['light'],
-    xpTable: [0,1200,2400,5000,10000,20000,40000,80000,160000,240000,360000,480000,600000,720000,840000,960000],
+    xpTable: [0,70,175,350,700,1400,2800,5500,11000,22000,36000,52000,70000,90000,115000,140000],
     flavorText: 'The monster never saw you coming. Neither did the lock.'
   },
   druid: {
@@ -272,7 +272,7 @@ const CLASSES = {
     abilities: ['nature_walk','wild_empathy'],
     spells: ['wolf_form','bear_form','hawk_form','entangle','bark_skin','regeneration_spell','summon_animal','poison_cloud'],
     weaponBonus: 0, armorTypes: ['light','robes'],
-    xpTable: [0,2000,4000,8000,16000,32000,64000,120000,240000,360000,480000,600000,720000,840000,960000,1080000],
+    xpTable: [0,100,250,500,1000,2000,4000,8000,16000,30000,50000,75000,100000,130000,165000,200000],
     flavorText: 'The forest remembers. The forest protects. The forest devours.'
   },
   ranger: {
@@ -284,7 +284,7 @@ const CLASSES = {
     abilities: ['ranged_mastery','tracker'],
     spells: ['tracking','called_shot','camouflage'],
     weaponBonus: 0, armorTypes: ['light','medium'],
-    xpTable: [0,1800,3600,7000,14000,28000,56000,100000,200000,300000,400000,500000,600000,700000,800000,900000],
+    xpTable: [0,90,225,450,900,1800,3600,7000,14000,27000,45000,67000,92000,120000,150000,185000],
     flavorText: 'Every creature leaves a trail. You read them like a book.'
   },
   warlock: {
@@ -296,7 +296,7 @@ const CLASSES = {
     abilities: ['eldritch_pact','dark_channeling'],
     spells: ['eldritch_blast','hex','dark_pact','soul_drain','dimensional_rift'],
     weaponBonus: 0, armorTypes: ['robes','cloth'],
-    xpTable: [0,2500,5000,10000,20000,40000,80000,150000,300000,450000,600000,750000,900000,1050000,1200000,1350000],
+    xpTable: [0,120,300,600,1200,2500,5000,10000,20000,35000,55000,80000,110000,145000,185000,230000],
     flavorText: 'Power has a price. Your patron collects with interest.'
   }
 };

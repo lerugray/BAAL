@@ -1,5 +1,37 @@
 # BAAL — Changelog
 
+## v6 (2026-03-15)
+
+### 4 New Classes
+- **Thief** — Stealth mechanic (unalerted monsters have reduced detection range based on DEX), backstab (3x damage on unaware), smoke bomb, poison blade, shadow step, detect traps. Light armor only.
+- **Druid** — Shapeshifting (Wolf form: fast+attack, Bear form: tank+HP+AC, Hawk form: fly+FOV, 30 turns each). Nature spells: entangle, bark skin, regeneration, summon wolf companion, poison cloud. Walks through water freely.
+- **Ranger** — Starts with a wolf companion. Ranged mastery (+2 with bows/thrown). Tracking (30-turn detect monsters), called shot (+4 hit +1d6 ranged), camouflage (invisible while stationary).
+- **Warlock** — Must pledge to a god at character creation. Eldritch blast scales with piety (not level). Hex, dark pact (sacrifice HP for MP), soul drain, dimensional rift. Piety gain 2x, but apostasy = instant death.
+
+### 3 Sub-Dungeon Branches
+- **Duat** (Egyptian underworld, entry floor 5, 4 floors) — Sand-themed dungeon with scarab swarms, mummy warriors, anubis guards, sand golems, sphinxes. Boss: Ammit the Devourer. Rune reward: Heart Scarab (permanent hunger immunity).
+- **Mictlan** (Aztec underworld, entry floor 8, 5 floors) — Red/lava-themed with obsidian jaguars, feathered serpents, tzitzimime, bone dancers, blood elementals. Boss: Mictlantecuhtli. Rune reward: Obsidian Mirror (permanent detect monsters on all floors).
+- **Tartarus** (Greek underworld, entry floor 11, 4 floors) — Frost/water-themed with shades, furies, titans, Cerberus, Styx boatmen. Boss: Shade Lord. Rune reward: Golden Bough (one free death — return with 1 HP instead of dying).
+- Branch portals appear on specific main dungeon floors. Branches are combat-focused (no shops/NPCs). Each has themed terrain, unique monsters, and a boss on the final floor.
+- Rune effects are game-changing persistent bonuses. Victory screen tracks runes collected and branches completed.
+
+### ~25 New Monsters
+- Duat: Scarab Swarm, Mummy Warrior, Anubis Guard, Sand Golem, Sphinx, Ammit (boss)
+- Mictlan: Obsidian Jaguar, Feathered Serpent, Tzitzimime, Bone Dancer, Blood Elemental, Mictlantecuhtli (boss)
+- Tartarus: Shade, Fury, Titan, Cerberus, Styx Boatman, Shade Lord (boss)
+- Main dungeon floors 6-10: Manticore, Phase Spider, Wyvern, Clay Golem, Dark Elf
+
+### 4 New Companion NPCs
+- **War Dog** — Animal companion, strong melee, can't equip/chat, loyal.
+- **Old Merrick** (Cartographer) — Non-combat, reveals minimap room outlines.
+- **Whisper** (Spirit Medium) — Reads ghost data, warns of dangers from previous runs.
+- **Prince Varek** (Cursed Prince) — Very powerful fighter, drains 1 gold/turn. Leaves if gold hits 0.
+
+### Mapgen Extraction
+- Extracted `generateLevel()`, `createMonster()`, `createTrap()`, `generateItem()` from engine.js into new `mapgen.js` file. Script load order: data.js → mapgen.js → engine.js → render.js → ui.js.
+
+---
+
 ## v5c (2026-03-14)
 
 ### 8-Bit Remaster Tileset + Animated Sprites

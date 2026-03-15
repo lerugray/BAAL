@@ -250,6 +250,54 @@ const CLASSES = {
     weaponBonus: 0, armorTypes: ['robes','cloth'],
     xpTable: [0,2500,5000,10000,20000,40000,80000,150000,300000,450000,600000,750000,900000,1050000,1200000,1350000],
     flavorText: 'The pen is mightier than the sword, unless the pen IS a fireball.'
+  },
+  thief: {
+    name: 'Thief', sym: 'T', color: '#88cc44',
+    desc: 'Shadow operative. Backstabs unaware foes, masters traps, vanishes in smoke.',
+    hpDice: 6, mpBase: 5, mpPerLevel: 3,
+    primeStat: 'dex',
+    saveMod: { poison:1, magic:0, breath:3, death:1 },
+    abilities: ['backstab','trap_mastery','lockpick'],
+    spells: ['backstab_strike','smoke_bomb','poison_blade','shadow_step','detect_traps'],
+    weaponBonus: 0, armorTypes: ['light'],
+    xpTable: [0,1200,2400,5000,10000,20000,40000,80000,160000,240000,360000,480000,600000,720000,840000,960000],
+    flavorText: 'The monster never saw you coming. Neither did the lock.'
+  },
+  druid: {
+    name: 'Druid', sym: 'D', color: '#44aa66',
+    desc: 'Shapeshifter and nature priest. Takes animal forms, commands the wild, walks through water.',
+    hpDice: 8, mpBase: 8, mpPerLevel: 4,
+    primeStat: 'wis',
+    saveMod: { poison:3, magic:1, breath:1, death:1 },
+    abilities: ['nature_walk','wild_empathy'],
+    spells: ['wolf_form','bear_form','hawk_form','entangle','bark_skin','regeneration_spell','summon_animal','poison_cloud'],
+    weaponBonus: 0, armorTypes: ['light','robes'],
+    xpTable: [0,2000,4000,8000,16000,32000,64000,120000,240000,360000,480000,600000,720000,840000,960000,1080000],
+    flavorText: 'The forest remembers. The forest protects. The forest devours.'
+  },
+  ranger: {
+    name: 'Ranger', sym: 'R', color: '#44cc88',
+    desc: 'Wilderness warrior. Ranged mastery, animal companion, tracks prey through the dark.',
+    hpDice: 8, mpBase: 4, mpPerLevel: 2,
+    primeStat: 'dex',
+    saveMod: { poison:2, magic:0, breath:2, death:1 },
+    abilities: ['ranged_mastery','tracker'],
+    spells: ['tracking','called_shot','camouflage'],
+    weaponBonus: 0, armorTypes: ['light','medium'],
+    xpTable: [0,1800,3600,7000,14000,28000,56000,100000,200000,300000,400000,500000,600000,700000,800000,900000],
+    flavorText: 'Every creature leaves a trail. You read them like a book.'
+  },
+  warlock: {
+    name: 'Warlock', sym: 'W', color: '#aa44cc',
+    desc: 'Pact-bound to a god. Eldritch powers scale with piety. Apostasy means death.',
+    hpDice: 6, mpBase: 10, mpPerLevel: 5,
+    primeStat: 'cha',
+    saveMod: { poison:0, magic:3, breath:0, death:2 },
+    abilities: ['eldritch_pact','dark_channeling'],
+    spells: ['eldritch_blast','hex','dark_pact','soul_drain','dimensional_rift'],
+    weaponBonus: 0, armorTypes: ['robes','cloth'],
+    xpTable: [0,2500,5000,10000,20000,40000,80000,150000,300000,450000,600000,750000,900000,1050000,1200000,1350000],
+    flavorText: 'Power has a price. Your patron collects with interest.'
   }
 };
 
@@ -469,6 +517,31 @@ const SPELL_DATA = {
   // Fighting-man
   power_strike: { name:'Power Strike', mp:0, level:1, school:'martial', target:'single', desc:'Double damage melee strike (costs 2 turns).', effect:'power_strike', cls:['fightingman'], cost_turns:2 },
   steady_aim: { name:'Steady Aim', mp:0, level:1, school:'martial', target:'self', desc:'Next ranged attack is guaranteed critical hit.', effect:'steady_aim', cls:['fightingman'] },
+  // Thief
+  backstab_strike: { name:'Backstab', mp:0, level:1, school:'martial', target:'single', desc:'Strike an unaware enemy for 3x weapon damage.', effect:'backstab', cls:['thief'] },
+  smoke_bomb: { name:'Smoke Bomb', mp:4, level:1, school:'martial', target:'self', desc:'Create a smoke cloud. Become invisible for 5 turns.', effect:'smoke_bomb', cls:['thief'] },
+  poison_blade: { name:'Poison Blade', mp:3, level:2, school:'martial', target:'self', desc:'Coat your weapon in venom. Next 5 attacks apply poison.', effect:'poison_blade', cls:['thief'] },
+  shadow_step: { name:'Shadow Step', mp:6, level:3, school:'martial', target:'single', desc:'Teleport behind a target monster.', effect:'shadow_step', cls:['thief'] },
+  detect_traps: { name:'Detect Traps', mp:2, level:1, school:'martial', target:'self', desc:'Reveal all traps on the current floor.', effect:'detect_traps', cls:['thief'] },
+  // Druid
+  wolf_form: { name:'Wolf Form', mp:8, level:1, school:'nature', target:'self', desc:'Transform into a wolf. +3 attack, speed x1.5, -2 AC. 30 turns.', effect:'shapeshift', power:1, cls:['druid'] },
+  bear_form: { name:'Bear Form', mp:10, level:2, school:'nature', target:'self', desc:'Transform into a bear. +50% max HP, +4 AC, speed x0.7. 30 turns.', effect:'shapeshift', power:2, cls:['druid'] },
+  hawk_form: { name:'Hawk Form', mp:6, level:2, school:'nature', target:'self', desc:'Transform into a hawk. Fly over water/lava, +4 FOV, -30% HP. 30 turns.', effect:'shapeshift', power:3, cls:['druid'] },
+  entangle: { name:'Entangle', mp:5, level:1, school:'nature', target:'area', desc:'Roots bind all enemies within 4 tiles for 5 turns.', effect:'entangle', cls:['druid'] },
+  bark_skin: { name:'Bark Skin', mp:4, level:1, school:'nature', target:'self', desc:'Your skin hardens to bark. +3 AC for 20 turns.', effect:'bark_skin', cls:['druid'] },
+  regeneration_spell: { name:'Regeneration', mp:8, level:3, school:'nature', target:'self', desc:'Regenerate 2 HP per turn for 15 turns.', effect:'regen_spell', cls:['druid'] },
+  summon_animal: { name:'Summon Animal', mp:10, level:3, school:'nature', target:'self', desc:'Call a wolf companion to fight by your side.', effect:'summon_animal', cls:['druid'] },
+  poison_cloud: { name:'Poison Cloud', mp:7, level:2, school:'nature', target:'area', desc:'A toxic cloud poisons all nearby enemies.', effect:'poison_cloud', power:12, cls:['druid'] },
+  // Ranger
+  tracking: { name:'Tracking', mp:3, level:1, school:'martial', target:'self', desc:'Sense all monsters on this floor for 30 turns.', effect:'tracking', cls:['ranger'] },
+  called_shot: { name:'Called Shot', mp:0, level:1, school:'martial', target:'self', desc:'Next ranged attack: +4 to hit, +1d6 damage.', effect:'called_shot', cls:['ranger'] },
+  camouflage: { name:'Camouflage', mp:4, level:2, school:'martial', target:'self', desc:'Blend into surroundings. Invisible while stationary for 10 turns.', effect:'camouflage', cls:['ranger'] },
+  // Warlock
+  eldritch_blast: { name:'Eldritch Blast', mp:0, level:1, school:'eldritch', target:'single', desc:'Bolt of dark energy. Damage scales with piety, not level.', effect:'eldritch_blast', cls:['warlock'] },
+  hex: { name:'Hex', mp:5, level:1, school:'eldritch', target:'single', desc:'Curse a target. -2 AC, -2 to hit for 15 turns.', effect:'hex', cls:['warlock'] },
+  dark_pact: { name:'Dark Pact', mp:0, level:2, school:'eldritch', target:'self', desc:'Sacrifice 20% HP to restore 40% MP.', effect:'dark_pact', cls:['warlock'] },
+  soul_drain: { name:'Soul Drain', mp:8, level:3, school:'eldritch', target:'single', desc:'Drain life from target. Deal damage and heal yourself.', effect:'soul_drain', cls:['warlock'] },
+  dimensional_rift: { name:'Dimensional Rift', mp:15, level:4, school:'eldritch', target:'self', desc:'Tear a rift in space. Teleport to any explored tile.', effect:'dimensional_rift', cls:['warlock'] },
 };
 
 // ─── ITEMS ───────────────────────────────────────────────────
@@ -572,6 +645,10 @@ const ITEM_TEMPLATES = {
   throwing_star: { name:'Throwing Stars', glyph:'*', color:'#ccccdd', type:'thrown', dmg:[1,3,0], count:8, range:6, val:5 },
   // Special/magic
   rune_of_baal: { name:'⛧ Rune of Baal ⛧', glyph:'§', color:'#ffd700', type:'quest_item', val:0, unique:true },
+  // Branch rune artifacts
+  heart_scarab: { name:'Heart Scarab', glyph:'*', color:'#ffcc44', type:'rune_artifact', val:0, unique:true },
+  obsidian_mirror: { name:'Obsidian Mirror', glyph:'*', color:'#660088', type:'rune_artifact', val:0, unique:true },
+  golden_bough: { name:'Golden Bough', glyph:'*', color:'#ffdd88', type:'rune_artifact', val:0, unique:true },
 };
 
 // ─── UNIQUE ITEMS ─────────────────────────────────────────────
@@ -657,6 +734,33 @@ const MONSTER_TEMPLATES = {
   ammit: { name:'Ammit', sym:'n', color:'#cc9922', hp:[7,8,16], ac:17, atk:[[3,6,5],[2,6,3]], xp:450, speed:1, floor:[12,16], hungerDrain:true, ai:'aggressive' },
   mind_flayer: { name:'Mind Flayer', sym:'I', color:'#aa44cc', hp:[6,8,10], ac:16, atk:[[2,6,4]], xp:400, speed:1, floor:[13,16], statusAtk:'confusion', drainLife:2, ai:'cunning' },
   aboleth: { name:'Aboleth', sym:'U', color:'#2266aa', hp:[8,8,18], ac:17, atk:[[2,8,5]], xp:500, speed:0.8, floor:[13,16], spells:['psychic_blast'], ai:'cunning' },
+  // Duat branch monsters
+  scarab_swarm: { name:'Scarab Swarm', sym:'s', color:'#ccaa33', hp:[2,6,2], ac:11, atk:[[1,4,0],[1,4,0]], xp:25, speed:1.3, floor:[1,16], ai:'pack', branch:'duat' },
+  mummy_warrior: { name:'Mummy Warrior', sym:'M', color:'#ccaa66', hp:[4,8,8], ac:15, atk:[[2,6,2]], xp:80, speed:0.8, floor:[1,16], undead:true, statusAtk:'paralyze', ai:'normal', branch:'duat' },
+  anubis_guard: { name:'Anubis Guard', sym:'A', color:'#ffcc44', hp:[5,8,10], ac:16, atk:[[2,8,3]], xp:120, speed:1, floor:[1,16], ai:'aggressive', branch:'duat' },
+  sand_golem: { name:'Sand Golem', sym:'G', color:'#ddcc88', hp:[6,8,15], ac:18, atk:[[3,6,4]], xp:150, speed:0.7, floor:[1,16], statusImmune:true, ai:'slow', branch:'duat' },
+  sphinx: { name:'Sphinx', sym:'S', color:'#ffdd88', hp:[5,8,12], ac:15, atk:[[2,6,3]], xp:100, speed:1, floor:[1,16], spells:['magic_missile'], ai:'cunning', branch:'duat' },
+  ammit_boss: { name:'Ammit the Devourer', sym:'A', color:'#ff4400', hp:[12,8,40], ac:20, atk:[[3,8,8],[2,6,5]], xp:1500, speed:1, floor:[1,16], isBoss:true, unique:true, statusImmune:true, hungerDrain:true, ai:'aggressive', branch:'duat' },
+  // Mictlan branch monsters
+  obsidian_jaguar: { name:'Obsidian Jaguar', sym:'J', color:'#333333', hp:[4,8,6], ac:16, atk:[[2,8,3],[1,6,2]], xp:90, speed:1.4, floor:[1,16], ai:'aggressive', branch:'mictlan' },
+  feathered_serpent: { name:'Feathered Serpent', sym:'S', color:'#44cc44', hp:[5,8,10], ac:14, atk:[[2,6,3]], xp:110, speed:1.1, floor:[1,16], fly:true, spells:['ice_lance'], statusAtk:'poison', ai:'cunning', branch:'mictlan' },
+  tzitzimime: { name:'Tzitzimime', sym:'T', color:'#aa00aa', hp:[6,8,12], ac:17, atk:[[2,8,4]], xp:150, speed:1, floor:[1,16], fly:true, drainLife:2, ai:'aggressive', faction:'chaotic', branch:'mictlan' },
+  bone_dancer: { name:'Bone Dancer', sym:'B', color:'#ddddaa', hp:[3,8,5], ac:13, atk:[[2,6,2]], xp:60, speed:1.2, floor:[1,16], undead:true, ai:'pack', branch:'mictlan' },
+  blood_elemental: { name:'Blood Elemental', sym:'E', color:'#cc0000', hp:[5,8,10], ac:15, atk:[[2,6,3]], xp:120, speed:0.9, floor:[1,16], burnOnHit:true, ai:'amorphous', branch:'mictlan' },
+  mictlan_boss: { name:'Mictlantecuhtli', sym:'M', color:'#440044', hp:[15,8,50], ac:22, atk:[[3,8,10],[2,8,6]], xp:2000, speed:1, floor:[1,16], isBoss:true, unique:true, statusImmune:true, undead:true, drainLife:3, ai:'cunning', branch:'mictlan' },
+  // Tartarus branch monsters
+  shade: { name:'Shade', sym:'s', color:'#8888cc', hp:[3,8,4], ac:14, atk:[[1,6,2]], xp:50, speed:1.1, floor:[1,16], undead:true, drainLife:1, ai:'normal', branch:'tartarus' },
+  fury: { name:'Fury', sym:'F', color:'#cc4444', hp:[5,8,8], ac:16, atk:[[2,6,3],[1,6,2]], xp:120, speed:1.3, floor:[1,16], fly:true, statusAtk:'confusion', ai:'aggressive', branch:'tartarus' },
+  titan: { name:'Titan', sym:'T', color:'#aaaacc', hp:[8,8,20], ac:20, atk:[[3,8,6]], xp:250, speed:0.8, floor:[1,16], statusImmune:true, ai:'aggressive', branch:'tartarus' },
+  cerberus: { name:'Cerberus', sym:'C', color:'#884422', hp:[7,8,15], ac:17, atk:[[2,6,3],[2,6,3],[1,6,2]], xp:200, speed:1, floor:[1,16], fireImmune:true, statusImmune:true, ai:'aggressive', branch:'tartarus' },
+  styx_boatman: { name:'Styx Boatman', sym:'B', color:'#556688', hp:[4,8,6], ac:13, atk:[[1,8,2]], xp:70, speed:0.8, floor:[1,16], undead:true, ai:'normal', branch:'tartarus' },
+  tartarus_boss: { name:'Shade Lord', sym:'S', color:'#4444ff', hp:[14,8,45], ac:21, atk:[[3,8,8],[2,6,5]], xp:1800, speed:1.1, floor:[1,16], isBoss:true, unique:true, undead:true, statusImmune:true, drainLife:4, ai:'cunning', branch:'tartarus' },
+  // Main dungeon mid-game monsters (floors 6-10)
+  manticore: { name:'Manticore', sym:'M', color:'#cc8844', hp:[5,8,10], ac:16, atk:[[2,8,3],[1,6,2]], xp:130, speed:1, floor:[6,10], ranged:true, ai:'cunning' },
+  phase_spider: { name:'Phase Spider', sym:'s', color:'#aa88cc', hp:[3,8,6], ac:15, atk:[[1,6,2]], xp:80, speed:1.2, floor:[6,10], statusAtk:'poison', ai:'ambush' },
+  wyvern: { name:'Wyvern', sym:'W', color:'#448844', hp:[4,8,8], ac:15, atk:[[2,6,3],[1,8,2]], xp:100, speed:1.1, floor:[6,10], fly:true, statusAtk:'poison', ai:'aggressive' },
+  clay_golem: { name:'Clay Golem', sym:'G', color:'#aa8866', hp:[6,8,12], ac:17, atk:[[2,8,4]], xp:110, speed:0.7, floor:[6,10], statusImmune:true, ai:'slow' },
+  dark_elf: { name:'Dark Elf', sym:'e', color:'#8844aa', hp:[3,8,5], ac:15, atk:[[1,6,2]], xp:75, speed:1.1, floor:[6,10], spells:['magic_missile','sleep'], ai:'cunning' },
   // Minibosses (unique per run)
   boss_orc_warlord: { name:'Urguk Fleshrender', sym:'O', color:'#ff4400', hp:[10,8,30], ac:18, atk:[[3,8,8]], xp:800, speed:1, floor:[5,5], loot:{waraxe_enchanted:1, chainmail:1, gold:1}, ai:'aggressive', isBoss:true, unique:true },
   boss_vampire_lord: { name:'Lord Sanguis', sym:'V', color:'#ff0022', hp:[12,8,40], ac:20, atk:[[3,6,8],[1,4,0]], xp:1500, speed:1.1, floor:[9,9], drainLife:5, regen:3, ai:'cunning', isBoss:true, unique:true },
@@ -680,6 +784,26 @@ const NPC_TEMPLATES = [
     hatedRaces:['dwarf'], raceInsults:{ dwarf:'"Dwarves. Too loud, too honest, too... short. We\'re done here."' } },
   { id:'merchant_agmar', name:'Agmar Goldtooth', sym:'@', color:'#ffd700', role:'merchant', personality:'greedy but honest', flavor:'Wandering merchant. Sells varied goods.' },
   { id:'sage_mervyn', name:'Mervyn the Sage', sym:'@', color:'#aaffcc', role:'sage', personality:'eccentric, wise', flavor:'Will identify items for 20gp each. Knows things.' },
+  { id:'war_dog', name:'War Dog', sym:'d', color:'#aa8844', role:'companion', cls:'animal',
+    personality:'loyal, fierce', hp_base:20, atk:[2,6,3],
+    flavor:'A scarred war hound. Offer it food to gain its trust.',
+    animal:true, noChat:true, noEquip:true,
+    hatedRaces:[], raceInsults:{} },
+  { id:'cartographer', name:'Old Merrick', sym:'@', color:'#aaaacc', role:'companion', cls:'sage',
+    personality:'mumbly, helpful', hp_base:8, atk:[1,4,0],
+    flavor:'A retired mapmaker. He reveals dungeon layouts. Charges 20gp.',
+    noncombat:true, minimapReveal:true,
+    hatedRaces:[], raceInsults:{} },
+  { id:'spirit_medium', name:'Whisper', sym:'@', color:'#8888ff', role:'companion', cls:'medium',
+    personality:'eerily calm, insightful', hp_base:12, atk:[1,4,0],
+    flavor:'She speaks to the dead. Warns of dangers past characters faced. 35gp.',
+    ghostReader:true,
+    hatedRaces:[], raceInsults:{} },
+  { id:'cursed_prince', name:'Prince Varek', sym:'@', color:'#ffcc44', role:'companion', cls:'fightingman',
+    personality:'arrogant, powerful, expensive', hp_base:40, atk:[3,6,5],
+    flavor:'Cursed royalty. Immensely powerful but drains 1 gold every turn. Free to recruit.',
+    goldDrain:1,
+    hatedRaces:[], raceInsults:{} },
 ];
 
 
@@ -766,7 +890,7 @@ const MONSTER_SOUNDS = {
 // ─── TILE CONSTANTS ──────────────────────────────────────────
 const TILE = {
   WALL: 0, FLOOR: 1, CORRIDOR: 2, DOOR: 3, STAIRS_DOWN: 4, STAIRS_UP: 5,
-  WATER: 6, LAVA: 7, DARK_FLOOR: 8, ALTAR: 9, SHOP: 10, TRAP: 11,
+  WATER: 6, LAVA: 7, DARK_FLOOR: 8, ALTAR: 9, SHOP: 10, TRAP: 11, PORTAL: 12,
 };
 
 const MAP_W = 80;
@@ -788,6 +912,7 @@ const TILE_COLORS = {
   [TILE.ALTAR]:      { ch:'_', fg:'#cc44cc', bg:'#0a0a14' },
   [TILE.SHOP]:       { ch:'¥', fg:'#dd44ff', bg:'#0a0a14' },
   [TILE.TRAP]:       { ch:'^', fg:'#996600', bg:'#0a0a14' },
+  [TILE.PORTAL]:     { ch:'O', fg:'#ff44ff', bg:'#1a0820' },
 };
 
 const FLOOR_THEMES = {
@@ -797,9 +922,18 @@ const FLOOR_THEMES = {
   forge:    { name:'Forge',          floors:[10,12],wall:'#aa5533', floor:'#4a2a1a', corridor:'#3a2010', bg:'#180a05', extraLava:true },
   abyss:    { name:'Abyss',          floors:[13,15],wall:'#7744aa', floor:'#2a1a3a', corridor:'#1a1030', bg:'#0d0818', demonBoost:true, extraTraps:true },
   throne:   { name:'Baal\'s Throne', floors:[16,16],wall:'#aa8833', floor:'#3a2a1a', corridor:'#2a1a10', bg:'#181005' },
+  // Branch themes
+  duat:     { name:'Duat',     floors:[0,0], wall:'#ccaa55', floor:'#5a4a2a', corridor:'#4a3a1a', bg:'#181505' },
+  mictlan:  { name:'Mictlan',  floors:[0,0], wall:'#882222', floor:'#4a1a1a', corridor:'#3a1010', bg:'#180505', extraLava:true },
+  tartarus: { name:'Tartarus', floors:[0,0], wall:'#445566', floor:'#2a3344', corridor:'#1a2233', bg:'#0a0f18', extraWater:true, fovReduction:2 },
 };
 
 function getFloorTheme(floor) {
+  // Check if in a branch
+  if(typeof G !== 'undefined' && G && G.branch && FLOOR_THEMES[G.branch]) {
+    return FLOOR_THEMES[G.branch];
+  }
+  // Normal floor theme
   for(const theme of Object.values(FLOOR_THEMES)) {
     if(floor >= theme.floors[0] && floor <= theme.floors[1]) return theme;
   }
@@ -815,3 +949,53 @@ function getThemedTileColors(floor) {
     [TILE.CORRIDOR]: { ch:'.', fg:theme.corridor, bg:'#0a0a14' },
   };
 }
+
+// ─── DUNGEON BRANCHES ────────────────────────────────────────
+const BRANCHES = {
+  duat: {
+    name: 'Duat', subtitle: 'The Egyptian Underworld',
+    entryFloor: 5, depth: 4,
+    theme: 'duat',
+    monsterKeys: ['scarab_swarm','mummy_warrior','anubis_guard','sand_golem','sphinx'],
+    boss: 'ammit_boss',
+    runeKey: 'heart_scarab',
+    entryMsg: 'The air fills with sand and incense. You descend into the Hall of Two Truths.',
+    floorMsgs: [
+      'Jackal-headed sentinels watch from the shadows.',
+      'The walls are covered in hieroglyphs that seem to move.',
+      'You hear the weighing of hearts echo through the halls.',
+      'Ammit stirs. The Devourer awaits.'
+    ]
+  },
+  mictlan: {
+    name: 'Mictlan', subtitle: 'The Aztec Underworld',
+    entryFloor: 8, depth: 5,
+    theme: 'mictlan',
+    monsterKeys: ['obsidian_jaguar','feathered_serpent','tzitzimime','bone_dancer','blood_elemental'],
+    boss: 'mictlan_boss',
+    runeKey: 'obsidian_mirror',
+    entryMsg: 'Obsidian winds howl. You enter the Nine Layers of the Dead.',
+    floorMsgs: [
+      'The wind carries shards of volcanic glass.',
+      'Rivers of blood flow between the chambers.',
+      'The bones of forgotten warriors rattle in the dark.',
+      'Skull racks line the walls. You are being watched.',
+      'The Lord of Mictlan awaits at the bottom of the world.'
+    ]
+  },
+  tartarus: {
+    name: 'Tartarus', subtitle: 'The Greek Underworld',
+    entryFloor: 11, depth: 4,
+    theme: 'tartarus',
+    monsterKeys: ['shade','fury','titan','cerberus','styx_boatman'],
+    boss: 'tartarus_boss',
+    runeKey: 'golden_bough',
+    entryMsg: 'Cold mist rises from the River Styx. You descend into Tartarus.',
+    floorMsgs: [
+      'Shades of the dead drift past, unseeing.',
+      'The river Styx flows black and cold.',
+      'Chains rattle in the eternal prison.',
+      'A familiar presence watches from the darkness...'
+    ]
+  },
+};

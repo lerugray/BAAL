@@ -473,9 +473,9 @@ function buildSummary() {
   if(ccSelectedClass === 'magicuser') { stats.int+=2; stats.wis+=1; }
   
   let godPickerHTML = '';
-  if(ccSelectedClass === 'cleric') {
+  if(ccSelectedClass === 'cleric' || ccSelectedClass === 'warlock') {
     godPickerHTML = `
-      <div style="color:var(--amber);margin-top:10px">Starting Faith (Clerics choose a patron):</div>
+      <div style="color:var(--amber);margin-top:10px">Starting Faith (${ccSelectedClass === 'warlock' ? 'Warlocks choose a patron' : 'Clerics choose a patron'}):</div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:6px;">
         ${Object.entries(GODS).map(([k,g]) => `
           <div onclick="ccPickGod('${k}')" style="padding:5px;border:1px solid ${ccSelectedGod===k?'var(--purple)':'var(--border)'};cursor:pointer;font-family:'Share Tech Mono';font-size:11px;background:${ccSelectedGod===k?'#0f0a1a':'transparent'};text-align:center;">
@@ -512,7 +512,7 @@ function startGame() {
   const name = nameVal || rng.pick(['Alaric','Brynn','Corvus','Dagna','Emric','Faelan','Gorin','Hessa']);
   
   // Pass chosen god for cleric
-  if(ccSelectedClass === 'cleric' && ccSelectedGod) {
+  if((ccSelectedClass === 'cleric' || ccSelectedClass === 'warlock') && ccSelectedGod) {
     G._startingGod = ccSelectedGod;
   }
   
@@ -1227,6 +1227,12 @@ function saveGame() {
       amuletLooks: GAME_AMULET_LOOKS,
       wandLooks: GAME_WAND_LOOKS,
       foundUniques: [...(G.foundUniques || [])],
+      branch: G.branch,
+      branchFloor: G.branchFloor,
+      branchReturnFloor: G.branchReturnFloor,
+      branchReturnPos: G.branchReturnPos,
+      completedBranches: G.completedBranches || [],
+      collectedRunes: G.collectedRunes || [],
       savedAt: Date.now()
     };
     // Level: tiles as flat array, explored/visible as arrays
@@ -1239,6 +1245,7 @@ function saveGame() {
         rooms: G.level.rooms,
         startPos: G.level.startPos,
         altarGods: G.level.altarGods,
+        portalBranches: G.level.portalBranches || null,
         explored: [...G.level.explored]
       };
     }
@@ -1306,6 +1313,13 @@ function continueGame() {
       reachMode: false,
       autoExploreActive: false,
       foundUniques: new Set(data.foundUniques || []),
+      branch: data.branch || null,
+      branchFloor: data.branchFloor || 0,
+      branchReturnFloor: data.branchReturnFloor || 0,
+      branchReturnPos: data.branchReturnPos || null,
+      mainDungeonLevel: null, // branch re-entry would need to regenerate
+      completedBranches: data.completedBranches || [],
+      collectedRunes: data.collectedRunes || [],
     };
 
     // Backward compat: alignment field for old saves

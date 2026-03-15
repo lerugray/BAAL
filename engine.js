@@ -13,443 +13,7 @@ function assignAltarGods() {
   // Also some floors may have no altar god (just a generic shrine)
 }
 
-// ─── MAP GENERATION ──────────────────────────────────────────
-class Room {
-  constructor(x, y, w, h) { this.x=x; this.y=y; this.w=w; this.h=h; }
-  center() { return [Math.floor(this.x+this.w/2), Math.floor(this.y+this.h/2)]; }
-  contains(x, y) { return x>=this.x && x<this.x+this.w && y>=this.y && y<this.y+this.h; }
-  intersects(other) {
-    return this.x < other.x+other.w+1 && this.x+this.w+1 > other.x &&
-           this.y < other.y+other.h+1 && this.y+this.h+1 > other.y;
-  }
-}
-
-function generateLevel(floor) {
-  const tiles = Array.from({length:MAP_H}, ()=>Array(MAP_W).fill(TILE.WALL));
-  const rooms = [];
-  const items = [];
-  const monsters = [];
-  const npcs = [];
-  
-  const numRooms = rng.int(10, 18);
-  
-  for(let attempt=0; attempt<200 && rooms.length<numRooms; attempt++) {
-    const w = rng.int(4, 14);
-    const h = rng.int(4, 10);
-    const x = rng.int(1, MAP_W - w - 1);
-    const y = rng.int(1, MAP_H - h - 1);
-    const room = new Room(x, y, w, h);
-    if(!rooms.some(r => r.intersects(room))) {
-      rooms.push(room);
-    }
-  }
-  
-  // Carve rooms
-  for(const r of rooms) {
-    for(let y=r.y; y<r.y+r.h; y++) {
-      for(let x=r.x; x<r.x+r.w; x++) {
-        tiles[y][x] = TILE.FLOOR;
-      }
-    }
-  }
-  
-  // Connect rooms
-  for(let i=1; i<rooms.length; i++) {
-    const [ax, ay] = rooms[i-1].center();
-    const [bx, by] = rooms[i].center();
-    // Horizontal then vertical
-    let cx = ax, cy = ay;
-    while(cx !== bx) {
-      tiles[cy][cx] = TILE.CORRIDOR;
-      cx += cx < bx ? 1 : -1;
-    }
-    while(cy !== by) {
-      tiles[cy][cx] = TILE.CORRIDOR;
-      cy += cy < by ? 1 : -1;
-    }
-    tiles[cy][cx] = TILE.CORRIDOR;
-  }
-  
-  // Place doors at room entrances
-  for(const r of rooms) {
-    const walls = [
-      [r.x-1, r.y+Math.floor(r.h/2)], [r.x+r.w, r.y+Math.floor(r.h/2)],
-      [r.x+Math.floor(r.w/2), r.y-1], [r.x+Math.floor(r.w/2), r.y+r.h]
-    ];
-    for(const [dx, dy] of walls) {
-      if(dy>=0 && dy<MAP_H && dx>=0 && dx<MAP_W && tiles[dy][dx]===TILE.CORRIDOR) {
-        if(rng.bool(0.5)) tiles[dy][dx] = TILE.DOOR;
-      }
-    }
-  }
-  
-  // Stairs
-  const startRoom = rooms[0];
-  const endRoom = rooms[rooms.length-1];
-  const [sx, sy] = startRoom.center();
-  const [ex, ey] = endRoom.center();
-  
-  if(floor > 1) tiles[sy][sx] = TILE.STAIRS_UP;
-  tiles[ey][ex] = TILE.STAIRS_DOWN;
-  
-  // Special tiles + temple chance
-  const hasTemple = !G.templeSpawned && rng.bool(0.12); // 12% chance, once per game
-  let altarCount = 0;
-  for(let i=2; i<rooms.length-1; i++) {
-    const r = rooms[i];
-    const [cx, cy] = r.center();
-    const roll = rng.next();
-    if(roll < 0.08 && floor >= 1) {
-      // Altar — assign a god
-      tiles[cy][cx] = TILE.ALTAR;
-      const godKeys = Object.keys(GODS);
-      const godKey = FLOOR_ALTAR_GODS[altarCount % godKeys.length] || rng.pick(godKeys);
-      // Store in a level-wide map (set below)
-      if(!G._pendingAltarGods) G._pendingAltarGods = {};
-      G._pendingAltarGods[`${cx},${cy}`] = godKey;
-      altarCount++;
-    } else if(roll < (floor <= 1 ? 0.08 : Math.min(0.15, 0.08 + floor * 0.01))) {
-      // Shop chance scales with floor: 0% floor 1, ~2% floor 2, ramping to 7% by floor 7+
-      tiles[cy][cx] = TILE.SHOP;
-    }
-    // Traps
-    if(rng.bool(0.15)) {
-      const tx = rng.int(r.x+1, r.x+r.w-2);
-      const ty = rng.int(r.y+1, r.y+r.h-2);
-      items.push(createTrap(tx, ty, floor));
-    }
-  }
-  
-  // Temple: fill a whole room with altars
-  if(hasTemple && rooms.length > 5) {
-    const templeRoom = rooms[Math.floor(rooms.length * 0.6)];
-    for(let ty2=templeRoom.y; ty2<templeRoom.y+templeRoom.h; ty2++) {
-      for(let tx2=templeRoom.x; tx2<templeRoom.x+templeRoom.w; tx2++) {
-        if(tiles[ty2][tx2] === TILE.FLOOR) {
-          tiles[ty2][tx2] = TILE.ALTAR;
-          const godKeys = Object.keys(GODS);
-          const godKey = rng.pick(godKeys);
-          if(!G._pendingAltarGods) G._pendingAltarGods = {};
-          G._pendingAltarGods[`${tx2},${ty2}`] = godKey;
-        }
-      }
-    }
-    log('You sense a place of great power nearby...', 'god');
-    G.templeSpawned = true;
-  }
-  
-  // Water and lava in deeper floors
-  if(floor >= 5) {
-    for(let i=0; i<rng.int(2, 8); i++) {
-      const r = rng.pick(rooms.slice(1, -1));
-      const lx = rng.int(r.x+1, r.x+r.w-2);
-      const ly = rng.int(r.y+1, r.y+r.h-2);
-      tiles[ly][lx] = floor >= 10 && rng.bool(0.3) ? TILE.LAVA : TILE.WATER;
-    }
-  }
-
-  // Floor theme terrain
-  const theme = getFloorTheme(floor);
-  if(theme.extraWater) {
-    for(let i=0; i<rng.int(5, 15); i++) {
-      const r = rng.pick(rooms.slice(1, -1));
-      const wx = rng.int(r.x+1, r.x+r.w-2);
-      const wy = rng.int(r.y+1, r.y+r.h-2);
-      if(tiles[wy][wx] === TILE.FLOOR) tiles[wy][wx] = TILE.WATER;
-    }
-  }
-  if(theme.extraLava) {
-    for(let i=0; i<rng.int(5, 12); i++) {
-      const r = rng.pick(rooms.slice(1, -1));
-      const lx = rng.int(r.x+1, r.x+r.w-2);
-      const ly = rng.int(r.y+1, r.y+r.h-2);
-      if(tiles[ly][lx] === TILE.FLOOR) tiles[ly][lx] = TILE.LAVA;
-    }
-  }
-  if(theme.extraTraps) {
-    for(let i=0; i<rng.int(3, 6); i++) {
-      const r = rng.pick(rooms.slice(1, -1));
-      const tx = rng.int(r.x+1, r.x+r.w-2);
-      const ty = rng.int(r.y+1, r.y+r.h-2);
-      if(tiles[ty][tx] === TILE.FLOOR) tiles[ty][tx] = TILE.TRAP;
-    }
-  }
-
-  // Special rooms (1-2 per floor from middle rooms)
-  const earlyEligible = Object.entries(MONSTER_TEMPLATES).filter(([k, v]) => !v.unique && v.floor[0] <= floor && v.floor[1] >= floor);
-  if(rooms.length >= 5) {
-    const midRooms = rooms.slice(2, -1);
-    const numSpecial = rng.int(1, Math.min(2, midRooms.length));
-    const specialTypes = ['armory','library','vault','crypt_chamber'];
-    for(let s=0; s<numSpecial; s++) {
-      const sRoom = rng.pick(midRooms);
-      const sType = rng.pick(specialTypes);
-      const [cx, cy] = sRoom.center();
-      switch(sType) {
-        case 'armory':
-          for(let a=0; a<rng.int(2,4); a++) {
-            const ai = generateItem(Math.min(16, floor+2));
-            if(ai.type === 'weapon' || ai.type === 'armor') {
-              ai.x = rng.int(sRoom.x+1, sRoom.x+sRoom.w-2);
-              ai.y = rng.int(sRoom.y+1, sRoom.y+sRoom.h-2);
-              items.push(ai);
-            }
-          }
-          // Guard monsters
-          for(let g=0; g<rng.int(1,2); g++) {
-            if(earlyEligible.length > 0) {
-              const [mk, mv] = rng.pick(earlyEligible);
-              const gm = createMonster(mk, mv, cx+g, cy, floor);
-              gm.hp = Math.floor(gm.hp * 1.3);
-              gm.maxHp = Math.floor(gm.maxHp * 1.3);
-              monsters.push(gm);
-            }
-          }
-          break;
-        case 'library':
-          for(let l=0; l<rng.int(2,3); l++) {
-            const si = { ...ITEM_TEMPLATES[rng.pick(['scroll_tele','scroll_id','scroll_mapping','scroll_enchant_wpn','scroll_enchant_arm','scroll_acquirement'])], id:`item_${Date.now()}_${rng.int(0,9999)}` };
-            si.x = rng.int(sRoom.x+1, sRoom.x+sRoom.w-2);
-            si.y = rng.int(sRoom.y+1, sRoom.y+sRoom.h-2);
-            items.push(si);
-          }
-          break;
-        case 'vault':
-          for(let v=0; v<rng.int(3,5); v++) {
-            items.push({ type:'gold', glyph:'$', color:'#ffcc00', amount:rng.int(floor*10, floor*40), x:rng.int(sRoom.x+1,sRoom.x+sRoom.w-2), y:rng.int(sRoom.y+1,sRoom.y+sRoom.h-2) });
-          }
-          const vaultItem = generateItem(Math.min(16, floor+3));
-          vaultItem.x = cx; vaultItem.y = cy;
-          items.push(vaultItem);
-          // Trap the vault
-          if(tiles[cy-1]?.[cx] === TILE.FLOOR) tiles[cy-1][cx] = TILE.TRAP;
-          if(tiles[cy+1]?.[cx] === TILE.FLOOR) tiles[cy+1][cx] = TILE.TRAP;
-          break;
-        case 'crypt_chamber':
-          for(let u=0; u<rng.int(3,5); u++) {
-            const undeadTypes = Object.entries(MONSTER_TEMPLATES).filter(([k,v]) => v.undead && v.floor[0] <= floor && v.floor[1] >= floor);
-            if(undeadTypes.length > 0) {
-              const [uk, uv] = rng.pick(undeadTypes);
-              const ux = rng.int(sRoom.x+1, sRoom.x+sRoom.w-2);
-              const uy = rng.int(sRoom.y+1, sRoom.y+sRoom.h-2);
-              if(!monsters.some(m => m.x===ux && m.y===uy)) {
-                monsters.push(createMonster(uk, uv, ux, uy, floor));
-              }
-            }
-          }
-          // Guaranteed ring or amulet
-          const accItem = generateItem(floor);
-          accItem.x = cx; accItem.y = cy;
-          items.push(accItem);
-          break;
-      }
-    }
-  }
-
-  // Place items
-  for(let i=1; i<rooms.length; i++) {
-    const r = rooms[i];
-    const numItems = rng.int(0, 2);
-    for(let j=0; j<numItems; j++) {
-      const ix = rng.int(r.x, r.x+r.w-1);
-      const iy = rng.int(r.y, r.y+r.h-1);
-      if(tiles[iy][ix] === TILE.FLOOR || tiles[iy][ix] === TILE.CORRIDOR) {
-        const item = generateItem(floor);
-        item.x = ix; item.y = iy;
-        items.push(item);
-      }
-    }
-    // Gold
-    if(rng.bool(0.45)) {
-      const [cx, cy] = r.center();
-      items.push({ type:'gold', glyph:'$', color:'#ffd700', name:'Gold', amount:rng.int(floor*5, floor*30), x:cx, y:cy });
-    }
-  }
-  
-  // Quest item on floor 16
-  if(floor === 16) {
-    const [ex, ey] = endRoom.center();
-    const runeItem = { ...ITEM_TEMPLATES.rune_of_baal, x:ex-1, y:ey-1 };
-    items.push(runeItem);
-  }
-  
-  // Place monsters — during ascent, use deeper monster pool and spawn more
-  const isAscending = G.ascending;
-  const monsterFloor = isAscending ? Math.min(16, floor + Math.floor((16 - floor) * 0.5)) : floor;
-  let eligibleMonsters = Object.entries(MONSTER_TEMPLATES).filter(([k, v]) => {
-    return !v.unique && v.floor[0] <= monsterFloor && v.floor[1] >= floor;
-  });
-  // Theme monster bias: double the weight of themed monsters
-  if(theme.undeadBoost) {
-    const undead = eligibleMonsters.filter(([k, v]) => v.undead);
-    eligibleMonsters = eligibleMonsters.concat(undead, undead); // 3x weight
-  }
-  if(theme.demonBoost) {
-    const demons = eligibleMonsters.filter(([k, v]) => v.faction === 'chaotic');
-    eligibleMonsters = eligibleMonsters.concat(demons, demons);
-  }
-
-  for(let i=1; i<rooms.length; i++) {
-    const r = rooms[i];
-    const baseMonsters = Math.min(3, 1 + Math.floor(floor/4));
-    const ascentBonus = isAscending ? Math.floor((16 - floor) / 4) + 1 : 0;
-    const numMonsters = rng.int(0, baseMonsters + ascentBonus);
-    for(let j=0; j<numMonsters; j++) {
-      const [mk, mv] = rng.pick(eligibleMonsters);
-      const mx = rng.int(r.x, r.x+r.w-1);
-      const my = rng.int(r.y, r.y+r.h-1);
-      if((tiles[my][mx] === TILE.FLOOR || tiles[my][mx] === TILE.CORRIDOR) &&
-         !monsters.some(m => m.x===mx && m.y===my)) {
-        const ascentHpScale = isAscending ? 1 + (16 - floor) * 0.06 : 1;
-        const m = createMonster(mk, mv, mx, my, monsterFloor);
-        m.hp = Math.floor(m.hp * ascentHpScale);
-        m.maxHp = Math.floor(m.maxHp * ascentHpScale);
-        monsters.push(m);
-      }
-    }
-  }
-  
-  // Boss monster
-  const bossKeys = Object.keys(MONSTER_TEMPLATES).filter(k => {
-    const v = MONSTER_TEMPLATES[k];
-    return v.isBoss && v.floor[0] === floor && !G.killedBosses?.includes(k);
-  });
-  if(bossKeys.length > 0) {
-    const bk = bossKeys[0];
-    const bv = MONSTER_TEMPLATES[bk];
-    const [bx, by] = endRoom.center();
-    monsters.push(createMonster(bk, bv, bx+1, by+1, floor, true));
-  }
-  
-  // NPC (chance scales with floor: 0% floor 1, ~6% floor 2, ramping to 25% by floor 8+)
-  const npcChance = floor <= 1 ? 0 : Math.min(0.25, floor * 0.03);
-  if(rng.bool(npcChance)) {
-    const availNPCs = NPC_TEMPLATES.filter(n => !G.joinedNPCs?.includes(n.id));
-    if(availNPCs.length > 0) {
-      const npc = rng.pick(availNPCs);
-      const r = rooms[Math.floor(rooms.length/2)];
-      const [nx, ny] = r.center();
-      npcs.push({ ...npc, x:nx+1, y:ny, hp:npc.hp_base, maxHp:npc.hp_base, aiState:'idle', companion:false });
-    }
-  }
-  
-  const altarGods = G._pendingAltarGods || {};
-  G._pendingAltarGods = {};
-  return { tiles, rooms, items, monsters, npcs, startPos: [sx, sy], explored: new Set(), altarGods };
-}
-
-function createTrap(x, y, floor) {
-  const trapTypes = ['dart_trap','pit_trap','alarm_trap','poison_gas','magic_trap'];
-  return { type:'trap', subtype: rng.pick(trapTypes), x, y, glyph:'^', color:'#884400', hidden:true, triggered:false, floor };
-}
-
-function createMonster(key, template, x, y, floor, isBoss=false) {
-  const hp = rng.dice(template.hp[0], template.hp[1], template.hp[2]);
-  const scaledHp = Math.floor(hp * (1 + floor * 0.05));
-  const m = {
-    key, ...template,
-    x, y,
-    hp: isBoss ? scaledHp * 2 : scaledHp,
-    maxHp: isBoss ? scaledHp * 2 : scaledHp,
-    atk: template.atk.map(a => [...a]),
-    confused: 0, paralyzed: 0, sleeping: 0, frightened: 0, poisoned: 0,
-    alerted: false, neutral: false, provoked: false,
-    id: `${key}_${x}_${y}_${Date.now()}`,
-  };
-  // Mimic disguise — looks like a random item on the floor
-  if(template.disguise) {
-    m.disguised = true;
-    const disguises = [
-      { sym:'!', color:'#ff8844', name:'a potion' },
-      { sym:')', color:'#cccccc', name:'a weapon' },
-      { sym:']', color:'#8888cc', name:'some armor' },
-      { sym:'?', color:'#eeddaa', name:'a scroll' },
-      { sym:'/', color:'#66aacc', name:'a wand' },
-    ];
-    const d = rng.pick(disguises);
-    m.disguiseSym = d.sym;
-    m.disguiseColor = d.color;
-    m.disguiseName = d.name;
-  }
-  return m;
-}
-
-function generateItem(floor) {
-  // Chance to spawn a unique item (3% base, scales with floor)
-  if(!G.foundUniques) G.foundUniques = new Set();
-  const uniqueChance = 0.02 + floor * 0.005;
-  if(rng.bool(uniqueChance)) {
-    const eligible = Object.entries(UNIQUE_ITEMS).filter(([k, v]) => floor >= v.minFloor && !G.foundUniques.has(k));
-    if(eligible.length > 0) {
-      const [key, template] = rng.pick(eligible);
-      G.foundUniques.add(key);
-      const item = { ...template, id: `unique_${key}_${Date.now()}`, uniqueKey: key };
-      if(item.type === 'ring') item.templateKey = key;
-      return item;
-    }
-  }
-
-  const roll = rng.next();
-  let pool;
-  if(roll < 0.25) pool = ['ration','bread','meat','fruit'];
-  else if(roll < 0.40) {
-    pool = ['potion_heal','potion_mana','potion_str','potion_speed','potion_invis','potion_conf','potion_poison','potion_xp',
-            'potion_blind','potion_weakness','potion_clarity','potion_might','potion_resist','potion_antidote','potion_restoration'];
-    if(floor >= 4) pool.push('potion_mutagen','potion_paralyze','potion_amnesia','potion_fire','potion_berserk');
-    if(floor >= 6) pool.push('potion_phasing');
-  }
-  else if(roll < 0.55) pool = ['scroll_tele','scroll_id','scroll_mapping','scroll_fear','scroll_enchant_wpn','scroll_enchant_arm','scroll_curse','scroll_acquirement','scroll_remove_curse'];
-  else if(roll < 0.65) {
-    pool = ['arrows','bolts','stones','throwing_knife','throwing_star'];
-    if(floor >= 3) pool.push('javelin','throwing_axe');
-  }
-  else {
-    // Equipment — weighted by floor
-    const wpnPool = ['dagger','shortsword','longsword','mace','waraxe','shortbow','sling','flail','morningstar'];
-    if(floor >= 4) wpnPool.push('greatsword','crossbow','longbow','spear','falchion','battleaxe');
-    if(floor >= 7) wpnPool.push('staff','warhammer','halberd');
-    if(floor >= 9) wpnPool.push('wand_fire','wand_cold','wand_lightning');
-    if(floor >= 11) wpnPool.push('wand_poison','wand_sleep','wand_digging','wand_polymorph');
-    const armPool = ['leather','shield'];
-    if(floor >= 3) armPool.push('chainmail','helmet','large_shield');
-    if(floor >= 6) armPool.push('platemail','cap_int','cloak_prot','boots_speed','boots_elvenkind');
-    const accPool = ['ring_prot','ring_str','ring_fire'];
-    if(floor >= 4) accPool.push('ring_int','ring_regen','amulet_life');
-    if(floor >= 7) accPool.push('amulet_MR','cloak_inv');
-    if(rng.bool(0.01)) { // Rare cursed
-      pool = ['ring_doom','amulet_curse','scroll_curse'];
-    } else {
-      const which = rng.next();
-      if(which < 0.5) pool = wpnPool;
-      else if(which < 0.75) pool = armPool;
-      else pool = accPool;
-    }
-  }
-  
-  const key = rng.pick(pool);
-  const template = ITEM_TEMPLATES[key] || ITEM_TEMPLATES.ration;
-  const item = { ...template, id: `item_${Date.now()}_${rng.int(0,9999)}` };
-  // Track template key for rings/amulets/wands so we can identify the type globally
-  if(item.type === 'ring' || item.type === 'amulet') item.templateKey = key;
-  if(item.type === 'wand') {
-    item.templateKey = key;
-    item.charges = rng.int(3, item.charges + 5);  // Randomize charges per instance
-  }
-  
-  // Enchantment chance increases with floor depth
-  if((item.type === 'weapon' || item.type === 'armor') && rng.bool(floor * 0.04)) {
-    item.enchant = rng.int(1, Math.min(5, Math.floor(floor/3)+1));
-    item.name = `+${item.enchant} ${item.name}`;
-  }
-  // Cursed items — hidden until equipped
-  if(!item.cursed && rng.bool(0.05)) {
-    item.cursed = true;
-    item.enchant = (item.enchant || 0) - rng.int(1, 3);
-    // Curse not shown in name until identified
-  }
-  
-  return item;
-}
+// ─── MAP GENERATION (moved to mapgen.js) ────────────────────
 
 // ─── GHOST SYSTEM ────────────────────────────────────────────
 let GHOST_GRAVEYARD = JSON.parse(localStorage.getItem('baal_ghosts') || '[]');
@@ -514,6 +78,10 @@ function initPlayer(race, cls, name) {
   if(cls === 'fightingman') { stats.str += 2; stats.con += 1; }
   if(cls === 'cleric') { stats.wis += 2; stats.con += 1; }
   if(cls === 'magicuser') { stats.int += 2; stats.wis += 1; }
+  if(cls === 'thief')   { stats.dex += 3; stats.str += 1; }
+  if(cls === 'druid')   { stats.wis += 2; stats.con += 1; }
+  if(cls === 'ranger')  { stats.dex += 2; stats.str += 1; }
+  if(cls === 'warlock') { stats.cha += 2; stats.int += 1; }
   
   // Roll extra stats (3d6 for each, keep if better)
   for(const stat of Object.keys(stats)) {
@@ -541,12 +109,30 @@ function initPlayer(race, cls, name) {
     startItems.push({ ...ITEM_TEMPLATES.leather, id:'start_arm' });
     startItems.push({ ...ITEM_TEMPLATES.shield, id:'start_sh' });
     startItems.push({ ...ITEM_TEMPLATES.potion_heal, id:'start_pot' });
-  } else {
+  } else if(cls === 'magicuser') {
     startItems.push({ ...ITEM_TEMPLATES.dagger, id:'start_wpn' });
     startItems.push({ ...ITEM_TEMPLATES.robes, id:'start_arm' });
     startItems.push({ ...ITEM_TEMPLATES.potion_mana, id:'start_pot1' });
     startItems.push({ ...ITEM_TEMPLATES.potion_mana, id:'start_pot2' });
     startItems.push({ ...ITEM_TEMPLATES.scroll_id, id:'start_scroll' });
+  } else if(cls === 'thief') {
+    startItems.push({ ...ITEM_TEMPLATES.dagger, id:'start_wpn' });
+    startItems.push({ ...ITEM_TEMPLATES.leather, id:'start_arm' });
+    startItems.push({ ...ITEM_TEMPLATES.dagger, id:'start_wpn2' });
+  } else if(cls === 'druid') {
+    startItems.push({ ...ITEM_TEMPLATES.staff, id:'start_wpn' });
+    startItems.push({ ...ITEM_TEMPLATES.leather, id:'start_arm' });
+    startItems.push({ ...ITEM_TEMPLATES.ration, id:'start_food3' });
+  } else if(cls === 'ranger') {
+    startItems.push({ ...ITEM_TEMPLATES.shortbow, id:'start_bow' });
+    startItems.push({ ...ITEM_TEMPLATES.arrows, id:'start_arrows' });
+    startItems.push({ ...ITEM_TEMPLATES.arrows, id:'start_arrows2' });
+    startItems.push({ ...ITEM_TEMPLATES.leather, id:'start_arm' });
+    startItems.push({ ...ITEM_TEMPLATES.dagger, id:'start_wpn' });
+  } else if(cls === 'warlock') {
+    startItems.push({ ...ITEM_TEMPLATES.dagger, id:'start_wpn' });
+    startItems.push({ ...ITEM_TEMPLATES.potion_mana, id:'start_pot1' });
+    startItems.push({ ...ITEM_TEMPLATES.potion_mana, id:'start_pot2' });
   }
   
   // Race starting item
@@ -586,6 +172,22 @@ function initPlayer(race, cls, name) {
     player.god = G._startingGod;
     player.piety = 10;
     log(`You begin your journey in service of ${GODS[player.god].name}.`, 'god');
+  }
+
+  // Ranger starts with wolf companion
+  if(cls === 'ranger') {
+    player.companions.push({
+      id: 'ranger_wolf', name: 'Wolf', sym: 'd', color: '#aa8844',
+      cls: 'animal', hp: 15, maxHp: 15, atk: [[1,6,2]],
+      x: 0, y: 0, companion: true, animal: true, stayPut: false,
+      facing: 'd', animState: 'idle', compLevel: 1, xp: 0
+    });
+  }
+
+  // Warlock starts with pledged god
+  if(cls === 'warlock' && G._startingGod) {
+    player.god = G._startingGod;
+    player.piety = 10;
   }
   
   player.mutations = [];
@@ -651,6 +253,13 @@ function startNewGame(race, cls, name) {
     reachMode: false,
     ascending: false,   // true once Rune is picked up — player must escape to surface
     foundUniques: new Set(),
+    branch: null,
+    branchFloor: 0,
+    branchReturnFloor: 0,
+    branchReturnPos: null,
+    mainDungeonLevel: null,
+    completedBranches: [],
+    collectedRunes: [],
   };
 
   G.level = generateLevel(G.floor);
@@ -708,6 +317,11 @@ function computeFOV() {
   
   // Detect Monsters spell — add all monster tiles to visible set
   if(player.status.detect_monsters > 0) {
+    for(const m of level.monsters) level.visible.add(`${m.x},${m.y}`);
+  }
+
+  // Obsidian Mirror — permanent monster detection
+  if(player.permanentDetect) {
     for(const m of level.monsters) level.visible.add(`${m.x},${m.y}`);
   }
 
@@ -784,6 +398,7 @@ function computeAC(player) {
   if(player.status.bless) ac += 2;
   if(player.status.sanctuary) ac += 5;
   if(player.status.arcane_shield) ac += 4;
+  if(player.status.bark_skin) ac += 3;
   if(player.status.corroded) ac -= (player.status.corroded_amount || 2);
   
   // Mutation AC bonuses
@@ -885,6 +500,13 @@ function tryMove(dx, dy) {
   setFacing(player, dx, dy);
   player.animState = 'walk';
 
+  // Camouflage breaks on movement
+  if(player.status.camouflage && (dx !== 0 || dy !== 0)) {
+    delete player.status.camouflage;
+    delete player.status.invisible;
+    log('Your camouflage breaks as you move.', 'info');
+  }
+
   // Weapon speed debt: slow weapons cost a turn after attacking
   if(player.status.speed_debt > 0) {
     delete player.status.speed_debt;
@@ -981,7 +603,7 @@ function tryMove(dx, dy) {
   }
   
   if(tile === TILE.WATER) {
-    if(!player.passives.includes('amphibious')) {
+    if(!player.passives.includes('amphibious') && !player.passives.includes('nature_walk')) {
       log('The water slows you.', 'info');
     }
     player.x = nx; player.y = ny;
@@ -1108,7 +730,7 @@ function checkTrap(x, y) {
 function shouldAutoPickup(item) {
   if(item.type === 'gold') return true;
   if(item.type === 'food' || item.type === 'ammo' || item.type === 'thrown') return true;
-  if(item.type === 'quest_item') return true;
+  if(item.type === 'quest_item' || item.type === 'rune_artifact') return true;
   if(item.type === 'potion') {
     // Skip if identified as bad
     const knownBad = ['confuse_self','poison_self','blind_self','paralyze_self','weaken_self','amnesia','burn_self','berserk'];
@@ -1170,6 +792,14 @@ function checkRunePickup(item) {
     log('The Rune pulses with ancient power. The dungeon trembles around you!', 'warning');
     log('You must escape to the surface! Ascend all sixteen floors to freedom!', 'system');
     flash('ESCAPE WITH THE RUNE!');
+  }
+  // Rune artifact pickup (branch runes)
+  if(item.type === 'rune_artifact') {
+    G.collectedRunes = G.collectedRunes || [];
+    if(!G.collectedRunes.includes(item.name)) {
+      G.collectedRunes.push(item.name);
+      applyRuneEffect(item);
+    }
   }
 }
 
@@ -1419,6 +1049,12 @@ function attackMonster(monster) {
     if(wpn?.slowOnHit && !monster.slowed) {
       monster.slowed = 5;
       monster.speed = (monster.speed || 1) * 0.5;
+    }
+    // Poison blade (thief ability)
+    if(p.status.poison_blade > 0 && !monster.statusImmune) {
+      monster.poisoned = rng.int(3, 6);
+      p.status.poison_blade--;
+      if(p.status.poison_blade <= 0) { delete p.status.poison_blade; log('The venom on your blade fades.', 'info'); }
     }
     // Player-inflicted status via weapon
     if(wpn?.statusOnHit && rng.bool(0.2)) {
@@ -1815,6 +1451,12 @@ function updateMonsters() {
       log('The Doppelganger shifts — it wears your face!', 'warning');
     }
 
+    // Thief stealth: unalerted monsters have reduced detection range
+    if(G.player.cls === 'thief' && !monster.alerted) {
+      const stealthRange = Math.max(2, 5 - Math.floor(G.player.stats.dex / 5));
+      if(dist > stealthRange) continue;
+    }
+
     if(inFOV && !monster.alerted) monster.alerted = true;
 
     if(!monster.alerted && dist > 10) continue;
@@ -1973,7 +1615,17 @@ function fleeFrom(monster, fx, fy) {
 
 function updateCompanions() {
   const p = G.player;
-  for(const comp of p.companions) {
+  for(const comp of [...p.companions]) {
+    // Cursed Prince gold drain
+    if(comp.goldDrain) {
+      p.gold -= comp.goldDrain;
+      if(p.gold <= 0) {
+        p.gold = 0;
+        log(`${comp.name}: "No gold? How tiresome. Farewell."`, 'info');
+        p.companions = p.companions.filter(c => c !== comp);
+        continue;
+      }
+    }
     // Find nearest visible hostile monster within engage range (skip neutrals)
     const target = G.level.monsters.filter(m => !m.neutral && !m.disguised).reduce((closest, m) => {
       const d = Math.sqrt((m.x-comp.x)**2+(m.y-comp.y)**2);
@@ -2331,15 +1983,17 @@ function endTurn() {
   if(G.level) G.level.monsters.forEach(m => { m.animState = 'idle'; });
   
   // Hunger
-  p.hunger -= 1;
-  if(p.hunger <= 0) {
-    p.hunger = 0;
-    const starveDmg = rng.int(1, 3);
-    p.hp -= starveDmg;
-    if(G.turn % 10 === 0) log('You are starving!', 'warning');
-    if(p.hp <= 0) { die('starvation'); return; }
+  if(p.hungerImmune) { /* Heart Scarab — skip hunger */ } else {
+    p.hunger -= 1;
+    if(p.hunger <= 0) {
+      p.hunger = 0;
+      const starveDmg = rng.int(1, 3);
+      p.hp -= starveDmg;
+      if(G.turn % 10 === 0) log('You are starving!', 'warning');
+      if(p.hp <= 0) { die('starvation'); return; }
+    }
   }
-  
+
   // Poison tick
   if(p.status.poisoned > 0) {
     p.status.poisoned--;
@@ -2417,6 +2071,11 @@ function endTurn() {
   if(p.equipped.ring1?.regen || p.equipped.ring2?.regen) {
     if(G.turn % 10 === 0) p.hp = Math.min(p.maxHp, p.hp + 1);
   }
+
+  // Druid regen spell
+  if(p.status.regen_spell > 0 && G.turn % 1 === 0) {
+    p.hp = Math.min(p.maxHp, p.hp + 2);
+  }
   if(p.passives.includes('regeneration') && G.turn % 8 === 0) {
     p.hp = Math.min(p.maxHp, p.hp + 1);
   }
@@ -2428,7 +2087,7 @@ function endTurn() {
   }
   
   // Status effect countdown
-  const skipCountdown = new Set(['speed_debt','temp_str_amount','corroded_amount','berserk_dmg','weakened_amount','might_amount','poison_resist']);
+  const skipCountdown = new Set(['speed_debt','temp_str_amount','corroded_amount','berserk_dmg','weakened_amount','might_amount','poison_resist','shiftForm','poison_blade','called_shot','camouflage']);
 
   // CON saving throw: chance to shake off negative statuses early (18+ on d20 + CON mod)
   const conMod = Math.floor((p.stats.con - 10) / 2);
@@ -2474,7 +2133,10 @@ function endTurn() {
           delete p.status.might_amount;
           log('The surge of might fades.', 'info');
         }
+        if(status === 'shifted') { revertShapeshift(); }
         if(status === 'arcane_shield') log('Your magical shield dissipates.', 'info');
+        if(status === 'bark_skin') log('The bark coating flakes away.', 'info');
+        if(status === 'regen_spell') log('The natural regeneration fades.', 'info');
         if(status === 'detect_monsters') log('Your heightened senses fade.', 'info');
         if(status === 'haste') log('Time resumes its normal flow.', 'info');
         if(status === 'sanctuary') log('The divine ward fades.', 'info');
@@ -2564,7 +2226,7 @@ function endTurn() {
 function autoExploreWantsItem(item) {
   if(item.type === 'gold') return true;
   if(item.type === 'food' || item.type === 'ammo' || item.type === 'thrown') return true;
-  if(item.type === 'quest_item') return true;
+  if(item.type === 'quest_item' || item.type === 'rune_artifact') return true;
   if(item.type === 'potion') {
     // Pick up if unidentified or known to be beneficial
     const knownBad = ['confuse_self','poison_self','blind_self','paralyze_self','weaken_self','amnesia','burn_self','berserk'];
@@ -2713,6 +2375,54 @@ function autoExploreStep() {
   }
   
   endTurn();
+}
+
+// ─── DRUID SHAPESHIFTING ─────────────────────────────────────
+function applyShapeshift(form) {
+  const p = G.player;
+  // Store original stats
+  p._originalForm = {
+    maxHp: p.maxHp, hp: p.hp, baseAC: p.baseAC,
+    str: p.stats.str, dex: p.stats.dex, con: p.stats.con
+  };
+  p.status.shifted = 30;
+  p.status.shiftForm = form;
+
+  if(form === 1) { // Wolf
+    p.stats.str += 3;
+    p.stats.dex += 2;
+    p.baseAC -= 2;
+    log('You transform into a wolf! Fast and fierce.', 'good');
+  } else if(form === 2) { // Bear
+    const hpBoost = Math.floor(p.maxHp * 0.5);
+    p.maxHp += hpBoost;
+    p.hp += hpBoost;
+    p.baseAC += 4;
+    log('You transform into a bear! Tough and mighty.', 'good');
+  } else if(form === 3) { // Hawk
+    const hpLoss = Math.floor(p.maxHp * 0.3);
+    p.maxHp -= hpLoss;
+    p.hp = Math.min(p.hp, p.maxHp);
+    p.status.fly = 30;
+    log('You transform into a hawk! Swift and airborne.', 'good');
+  }
+}
+
+function revertShapeshift() {
+  const p = G.player;
+  if(!p._originalForm) return;
+  const orig = p._originalForm;
+  p.stats.str = orig.str;
+  p.stats.dex = orig.dex;
+  p.stats.con = orig.con;
+  p.baseAC = orig.baseAC;
+  p.maxHp = orig.maxHp;
+  p.hp = Math.min(p.hp, p.maxHp);
+  delete p._originalForm;
+  delete p.status.shifted;
+  delete p.status.shiftForm;
+  delete p.status.fly;
+  log('You return to your natural form.', 'info');
 }
 
 // ─── SPELLS / ABILITIES ──────────────────────────────────────
@@ -2871,8 +2581,182 @@ function castSpell(spellKey) {
       if(mmTarget.hp <= 0) killMonster(mmTarget);
       break;
     }
+
+    // ─── THIEF SPELLS ───
+    case 'backstab': {
+      const btarget = getNearestMonster(m => !m.alerted);
+      if(!btarget) { log('No unaware targets nearby!', 'warning'); p.mp += spell.mp; return; }
+      const [dn, dd, db] = getWeaponDamage(p);
+      let bdmg = rng.dice(dn, dd, getDamageBonus(p) + db) * 3;
+      bdmg = Math.max(1, bdmg);
+      btarget.hp -= bdmg;
+      log(`You backstab ${btarget.name} for ${bdmg} damage!`, 'combat');
+      if(typeof addTileEffect === 'function') addTileEffect(btarget.x, btarget.y, [255,255,100], 400);
+      if(btarget.hp <= 0) killMonster(btarget);
+      break;
+    }
+    case 'smoke_bomb':
+      p.status.invisible = 5;
+      log('You hurl a smoke bomb! You vanish in a cloud of smoke.', 'good');
+      break;
+    case 'poison_blade':
+      p.status.poison_blade = 5;
+      log('You coat your blade with deadly venom. Next 5 attacks will poison.', 'good');
+      break;
+    case 'shadow_step': {
+      const starget = getNearestMonster();
+      if(!starget) { log('No target!', 'warning'); p.mp += spell.mp; return; }
+      // Teleport behind target (opposite side from player)
+      const sdx = Math.sign(starget.x - p.x);
+      const sdy = Math.sign(starget.y - p.y);
+      const stx = starget.x + sdx;
+      const sty = starget.y + sdy;
+      if(stx >= 0 && stx < MAP_W && sty >= 0 && sty < MAP_H && G.level.tiles[sty][stx] !== TILE.WALL) {
+        p.x = stx; p.y = sty;
+        log(`You shadow-step behind ${starget.name}!`, 'good');
+      } else {
+        p.x = starget.x - sdx; p.y = starget.y - sdy;
+        log(`You shadow-step near ${starget.name}!`, 'good');
+      }
+      break;
+    }
+    case 'detect_traps':
+      G.level.items.filter(i => i.type === 'trap' && !i.triggered).forEach(t => { t.hidden = false; });
+      log('Your senses heighten. All traps on this floor are revealed!', 'good');
+      break;
+
+    // ─── DRUID SPELLS ───
+    case 'shapeshift': {
+      if(p.status.shifted) {
+        // Revert existing shift
+        revertShapeshift();
+        break;
+      }
+      const form = spell.power; // 1=wolf, 2=bear, 3=hawk
+      applyShapeshift(form);
+      break;
+    }
+    case 'entangle': {
+      let entangled = 0;
+      G.level.monsters.filter(m => {
+        const d = Math.sqrt((m.x-p.x)**2+(m.y-p.y)**2);
+        return d <= 4 && G.level.visible?.has(`${m.x},${m.y}`) && !m.statusImmune;
+      }).forEach(m => { m.paralyzed = 5; entangled++; });
+      log(entangled ? `Grasping roots entangle ${entangled} enemies!` : 'No enemies in range.', entangled ? 'good' : 'warning');
+      break;
+    }
+    case 'bark_skin':
+      p.status.bark_skin = 20;
+      log('Your skin hardens to tough bark. +3 AC!', 'good');
+      break;
+    case 'regen_spell':
+      p.status.regen_spell = 15;
+      log('Natural energy flows through you. Regenerating!', 'good');
+      break;
+    case 'summon_animal': {
+      // Summon wolf companion (max 1 summoned animal at a time)
+      if(p.companions.some(c => c.summoned)) {
+        log('You already have a summoned companion.', 'warning');
+        p.mp += spell.mp;
+        return;
+      }
+      const wx = p.x + 1, wy = p.y;
+      const wolf = {
+        id: 'summoned_wolf', name: 'Summoned Wolf', sym: 'd', color: '#88aa44',
+        cls: 'animal', hp: 12 + p.level * 2, maxHp: 12 + p.level * 2, atk: [[1,6,p.level]],
+        x: wx, y: wy, companion: true, animal: true, summoned: true, stayPut: false,
+        facing: 'd', animState: 'idle', compLevel: 1, xp: 0
+      };
+      p.companions.push(wolf);
+      log('A wolf materializes from the shadows to aid you!', 'good');
+      break;
+    }
+    case 'poison_cloud': {
+      let poisoned = 0;
+      G.level.monsters.filter(m => {
+        const d = Math.sqrt((m.x-p.x)**2+(m.y-p.y)**2);
+        return d <= 3 && G.level.visible?.has(`${m.x},${m.y}`) && !m.statusImmune;
+      }).forEach(m => { m.poisoned = rng.int(5,10); poisoned++; });
+      log(poisoned ? `A toxic cloud engulfs ${poisoned} enemies!` : 'No enemies in range.', poisoned ? 'good' : 'warning');
+      break;
+    }
+
+    // ─── RANGER SPELLS ───
+    case 'tracking':
+      p.status.detect_monsters = 30;
+      log('You focus your senses. All creatures on this floor are revealed!', 'good');
+      break;
+    case 'called_shot':
+      p.status.called_shot = 1;
+      log('You line up a perfect shot. Next ranged attack: +4 hit, +1d6 damage.', 'info');
+      break;
+    case 'camouflage':
+      p.status.camouflage = 10;
+      p.status.invisible = 10;
+      log('You blend into your surroundings. Invisible while stationary.', 'good');
+      break;
+
+    // ─── WARLOCK SPELLS ───
+    case 'eldritch_blast': {
+      const etarget = getNearestMonster();
+      if(!etarget) { log('No target!', 'warning'); return; }
+      let edmg = Math.floor((p.piety || 0) * 0.5) + rng.dice(2, 6, 0);
+      if(p.passives.includes('magic_affinity')) edmg = Math.floor(edmg * 1.2);
+      etarget.hp -= edmg;
+      log(`Eldritch energy strikes ${etarget.name} for ${edmg} damage!`, 'combat');
+      if(typeof addTileEffect === 'function') addTileEffect(etarget.x, etarget.y, [170,60,200], 300);
+      gainPiety('casting_spells', 2);
+      if(etarget.hp <= 0) killMonster(etarget);
+      break;
+    }
+    case 'hex': {
+      const htarget = getNearestMonster();
+      if(!htarget) { log('No target!', 'warning'); p.mp += spell.mp; return; }
+      htarget.hexed = 15;
+      htarget.ac -= 2;
+      log(`You place a hex on ${htarget.name}! Its defenses crumble.`, 'combat');
+      break;
+    }
+    case 'dark_pact': {
+      const sacrifice = Math.floor(p.maxHp * 0.2);
+      const restore = Math.floor(p.maxMp * 0.4);
+      if(p.hp <= sacrifice + 1) { log('Too dangerous — you would die!', 'warning'); return; }
+      p.hp -= sacrifice;
+      p.mp = Math.min(p.maxMp, p.mp + restore);
+      log(`You sacrifice ${sacrifice} HP and restore ${restore} MP!`, 'warning');
+      gainPiety('taking_damage', 3);
+      break;
+    }
+    case 'soul_drain': {
+      const sdtarget = getNearestMonster();
+      if(!sdtarget) { log('No target!', 'warning'); p.mp += spell.mp; return; }
+      const sddmg = rng.dice(3, 6, Math.floor((p.piety||0) * 0.3));
+      sdtarget.hp -= sddmg;
+      const sdheal = Math.floor(sddmg * 0.5);
+      p.hp = Math.min(p.maxHp, p.hp + sdheal);
+      log(`You drain ${sdtarget.name}'s soul for ${sddmg} damage, healing ${sdheal}!`, 'combat');
+      if(sdtarget.hp <= 0) killMonster(sdtarget);
+      break;
+    }
+    case 'dimensional_rift': {
+      const walkable = [];
+      for(let y=0; y<MAP_H; y++) for(let x=0; x<MAP_W; x++) {
+        if(G.level.explored.has(`${x},${y}`) && (G.level.tiles[y][x]===TILE.FLOOR||G.level.tiles[y][x]===TILE.CORRIDOR) && !G.level.monsters.some(m=>m.x===x&&m.y===y)) {
+          walkable.push([x,y]);
+        }
+      }
+      if(walkable.length > 0) {
+        const [nx, ny] = rng.pick(walkable);
+        p.x = nx; p.y = ny;
+        log('Reality tears open — you step through the rift!', 'good');
+      } else {
+        log('The rift fails to form.', 'warning');
+        p.mp += spell.mp;
+      }
+      break;
+    }
   }
-  
+
   closeSpellScreen();
   endTurn();
 }
@@ -2911,6 +2795,7 @@ function turnUndead() {
 function gainPiety(action, amount) {
   const p = G.player;
   if(!p.god) return;
+  if(p.cls === 'warlock') amount *= 2;
   const god = GODS[p.god];
   if(!god.pietyGain.includes(action) && !['kills','taking_damage'].includes(action)) return;
   
@@ -3095,6 +2980,11 @@ function abandonGod() {
   log(`You abandon ${GODS[oldGod].name}!`, 'god');
   log(`${GODS[oldGod].name} is FURIOUS!`, 'warning');
   log(GODS[oldGod].apostasy, 'god');
+  if(p.cls === 'warlock') {
+    log('Your patron abandons you. Without divine power, the void claims your soul.', 'death');
+    die('divine abandonment');
+    return;
+  }
   applyGodWrath(oldGod);
   p.god = null;
   p.piety = 0;
@@ -3565,7 +3455,8 @@ function fireRanged() {
   const target = getNearestMonster();
   if(!target) { log('No target in sight!', 'warning'); return; }
 
-  const atkBonus = getAttackBonus(p) + (p.cls === 'fightingman' ? Math.floor(p.stats.dex/4) : 0);
+  const calledShotBonus = p.status.called_shot ? 4 : 0;
+  const atkBonus = getAttackBonus(p) + (p.cls === 'fightingman' ? Math.floor(p.stats.dex/4) : 0) + calledShotBonus;
   const roll = rng.dice(1, 20, atkBonus);
   const effectiveAC = target.ac - (weapon?.armorPierce || 0);
   const critThreshold = 19 - (weapon?.critBonus || 0);
@@ -3575,6 +3466,11 @@ function fireRanged() {
   if(crit || roll >= effectiveAC - 10) {
     const [dn, dd, db] = weapon.dmg || [1, 6, 0];
     let dmg = rng.dice(dn, dd, getDamageBonus(p) + db + (ammo?.dmgBonus||0));
+    // Ranger called shot
+    if(p.status.called_shot) {
+      dmg += rng.dice(1, 6, 0);
+      delete p.status.called_shot;
+    }
     if(target.undead && weapon?.bonusVsUndead) dmg += weapon.bonusVsUndead;
     if(crit) dmg *= 2;
     dmg = Math.max(1, dmg);
@@ -3778,6 +3674,71 @@ function closeThrowMenu() {
   document.getElementById('modal').style.display = 'none';
 }
 
+// ─── BRANCH DUNGEONS ─────────────────────────────────────────
+function enterBranch(branchKey) {
+  const branch = BRANCHES[branchKey];
+  if(!branch) return;
+
+  G.mainDungeonLevel = G.level;
+  G.branchReturnFloor = G.floor;
+  G.branchReturnPos = [G.player.x, G.player.y];
+  G.branch = branchKey;
+  G.branchFloor = 1;
+
+  log(branch.entryMsg, 'system');
+  if(branch.floorMsgs && branch.floorMsgs[0]) log(branch.floorMsgs[0], 'warning');
+  flash(branch.name.toUpperCase());
+
+  G.level = generateBranchLevel(branchKey, 1);
+  const [sx, sy] = G.level.startPos;
+  G.player.x = sx; G.player.y = sy;
+  G.player.companions.forEach(c => { c.x = sx+1; c.y = sy; });
+  computeFOV();
+  renderAll();
+}
+
+function exitBranch() {
+  const branchName = BRANCHES[G.branch]?.name || 'the depths';
+  G.level = G.mainDungeonLevel;
+  G.floor = G.branchReturnFloor;
+  const [rx, ry] = G.branchReturnPos;
+  G.player.x = rx; G.player.y = ry;
+  G.player.companions.forEach(c => { c.x = rx+1; c.y = ry; });
+  G.branch = null;
+  G.branchFloor = 0;
+  G.mainDungeonLevel = null;
+  G.branchReturnFloor = 0;
+  G.branchReturnPos = null;
+
+  log(`You emerge from ${branchName}. The main dungeon stretches before you.`, 'system');
+  computeFOV();
+  renderAll();
+}
+
+function applyRuneEffect(item) {
+  const key = item.name;
+  if(key === 'Heart Scarab') {
+    G.player.hungerImmune = true;
+    log('The Heart Scarab pulses with ancient power. You will never hunger again.', 'good');
+  } else if(key === 'Obsidian Mirror') {
+    G.player.permanentDetect = true;
+    log('The Obsidian Mirror reveals all. Every creature on every floor is known to you.', 'good');
+  } else if(key === 'Golden Bough') {
+    G.player.freeDeath = true;
+    log('The Golden Bough glows with pale light. Death will not claim you... this once.', 'good');
+  }
+
+  // Mark branch as completed
+  if(G.branch) {
+    G.completedBranches = G.completedBranches || [];
+    if(!G.completedBranches.includes(G.branch)) {
+      G.completedBranches.push(G.branch);
+      log(`*** ${BRANCHES[G.branch].name} COMPLETED ***`, 'good');
+      flash('BRANCH COMPLETE!');
+    }
+  }
+}
+
 // ─── STAIRS ──────────────────────────────────────────────────
 function descend() {
   const { player, level } = G;
@@ -3785,6 +3746,38 @@ function descend() {
 
   if(tile === TILE.SHOP) {
     openShop();
+    return;
+  }
+
+  // Branch portal
+  if(tile === TILE.PORTAL) {
+    const branchKey = level.portalBranches?.[`${player.x},${player.y}`];
+    if(branchKey && BRANCHES[branchKey]) {
+      enterBranch(branchKey);
+      return;
+    }
+  }
+
+  // Branch floor transition
+  if(G.branch) {
+    if(tile !== TILE.STAIRS_DOWN) {
+      log('You are not on stairs leading down.', 'info');
+      return;
+    }
+    G.branchFloor++;
+    const branch = BRANCHES[G.branch];
+    log(`You descend deeper into ${branch.name}. (${G.branch} floor ${G.branchFloor})`, 'system');
+    if(branch.floorMsgs && branch.floorMsgs[G.branchFloor-1]) {
+      log(branch.floorMsgs[G.branchFloor-1], 'warning');
+    }
+    flash(`${branch.name.toUpperCase()} - ${G.branchFloor}`);
+    player.hp = Math.min(player.maxHp, player.hp + Math.floor(player.maxHp * 0.1));
+    G.level = generateBranchLevel(G.branch, G.branchFloor);
+    const [sx, sy] = G.level.startPos;
+    player.x = sx; player.y = sy;
+    player.companions.forEach(c => { c.x = sx+1; c.y = sy; });
+    computeFOV();
+    renderAll();
     return;
   }
 
@@ -3872,6 +3865,24 @@ function ascend() {
   const { player, level } = G;
   const tile = level.tiles[player.y][player.x];
   if(tile !== TILE.STAIRS_UP) { log('No upward path here.', 'info'); return; }
+
+  // Branch ascent
+  if(G.branch) {
+    if(G.branchFloor <= 1) {
+      exitBranch();
+      return;
+    }
+    G.branchFloor--;
+    const branch = BRANCHES[G.branch];
+    log(`You ascend in ${branch.name}. (Floor ${G.branchFloor})`, 'system');
+    G.level = generateBranchLevel(G.branch, G.branchFloor);
+    const [sx, sy] = G.level.startPos;
+    player.x = sx; player.y = sy;
+    player.companions.forEach(c => { c.x = sx+1; c.y = sy; });
+    computeFOV();
+    renderAll();
+    return;
+  }
 
   const hasRune = player.inventory.some(i => i.type === 'quest_item');
 
@@ -4073,6 +4084,13 @@ function searchArea() {
 // ─── DEATH / WIN ──────────────────────────────────────────────
 function die(cause) {
   if(G.gameOver) return;
+  if(G.player.freeDeath) {
+    G.player.freeDeath = false;
+    G.player.hp = 1;
+    log('The Golden Bough shatters! You are pulled back from the brink of death!', 'good');
+    flash('DEATH DENIED!');
+    return;
+  }
   if(G.player.status.godmode) {
     G.player.hp = G.player.maxHp;
     log(`[GOD MODE] Survived lethal damage from ${cause}.`, 'system');
@@ -4124,7 +4142,13 @@ function winGame() {
         <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray)">Companions</span><span style="color:var(--cyan)">${compCount}</span></div>
         <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray)">Mutations</span><span style="color:var(--green)">${mutCount}</span></div>
         <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray)">Faith</span><span style="color:var(--purple)">${godName}</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray)">Branches Completed</span><span style="color:var(--purple)">${(G.completedBranches||[]).length}/3</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray)">Runes Collected</span><span style="color:var(--gold)">${(G.collectedRunes||[]).length}/3</span></div>
       </div>
+      ${(G.collectedRunes||[]).length > 0 ? `<div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px;">
+        <div style="color:var(--gold);font-size:14px;text-align:center;margin-bottom:4px;">— RUNES —</div>
+        ${(G.collectedRunes||[]).map(r => `<div style="color:var(--gold);text-align:center;font-size:13px;">* ${r}</div>`).join('')}
+      </div>` : ''}
     </div>
     <p style="color:var(--gray);font-style:italic;">Baal himself trembles at your name.<br>The surface world welcomes its champion.</p>
     <button class="menu-btn" onclick="location.reload()" style="border-color:var(--gold);color:var(--gold);">Play Again</button>

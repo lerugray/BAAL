@@ -271,37 +271,55 @@ const THEMED_TERRAIN = {
     wall: 0, floor: 115, floor_dot: 92, corridor: 92,
     door: 138, stairs_down: 46, stairs_up: 69,
     water: [102,103], lava: [106,107],
-    trap: 230, altar: [178,179], shop: 167
+    trap: 230, altar: [178,179], shop: 167, portal: 230
   },
   caves: {
     wall: 5, floor: 119, floor_dot: 96, corridor: 96,
     door: 138, stairs_down: 51, stairs_up: 74,
     water: [102,103], lava: [106,107],
-    trap: 230, altar: [178,179], shop: 167
+    trap: 230, altar: [178,179], shop: 167, portal: 230
   },
   crypt: {
     wall: 1, floor: 116, floor_dot: 93, corridor: 93,
     door: 140, stairs_down: 47, stairs_up: 70,
     water: [102,103], lava: [106,107],
-    trap: 175, altar: [178,179], shop: 167
+    trap: 175, altar: [178,179], shop: 167, portal: 230
   },
   forge: {
     wall: 2, floor: 122, floor_dot: 99, corridor: 99,
     door: 140, stairs_down: 48, stairs_up: 71,
     water: [102,103], lava: [106,107],
-    trap: 230, altar: [178,179], shop: 167
+    trap: 230, altar: [178,179], shop: 167, portal: 230
   },
   abyss: {
     wall: 6, floor: 121, floor_dot: 98, corridor: 98,
     door: 142, stairs_down: 52, stairs_up: 75,
     water: [102,103], lava: [106,107],
-    trap: 231, altar: [178,179], shop: 167
+    trap: 231, altar: [178,179], shop: 167, portal: 230
   },
   throne: {
     wall: 7, floor: 118, floor_dot: 95, corridor: 95,
     door: 142, stairs_down: 54, stairs_up: 77,
     water: [102,103], lava: [106,107],
-    trap: 232, altar: [178,179], shop: 167
+    trap: 232, altar: [178,179], shop: 167, portal: 230
+  },
+  duat: {
+    wall: 5, floor: 120, floor_dot: 97, corridor: 97,
+    door: 138, stairs_down: 54, stairs_up: 77,
+    water: [102,103], lava: [106,107],
+    trap: 230, altar: [178,179], shop: 167, portal: 230
+  },
+  mictlan: {
+    wall: 2, floor: 122, floor_dot: 99, corridor: 99,
+    door: 140, stairs_down: 48, stairs_up: 71,
+    water: [102,103], lava: [106,107],
+    trap: 231, altar: [178,179], shop: 167, portal: 231
+  },
+  tartarus: {
+    wall: 6, floor: 121, floor_dot: 98, corridor: 98,
+    door: 142, stairs_down: 52, stairs_up: 75,
+    water: [102,103], lava: [106,107],
+    trap: 232, altar: [178,179], shop: 167, portal: 232
   }
 };
 
@@ -319,10 +337,13 @@ const TILE_TO_TERRAIN_KEY = {
   [TILE.ALTAR]:       'altar',
   [TILE.SHOP]:        'shop',
   [TILE.TRAP]:        'trap',
+  [TILE.PORTAL]:      'portal',
 };
 
 // Map floor number → theme key
 function getThemeKey(floor) {
+  // Branch theme override
+  if(G && G.branch && THEMED_TERRAIN[G.branch]) return G.branch;
   const theme = getFloorTheme(floor);
   const name = theme.name.toLowerCase();
   if(name.includes('cave'))   return 'caves';
@@ -330,6 +351,9 @@ function getThemeKey(floor) {
   if(name.includes('forge'))  return 'forge';
   if(name.includes('abyss'))  return 'abyss';
   if(name.includes('throne')) return 'throne';
+  if(name.includes('duat'))   return 'duat';
+  if(name.includes('mictlan'))return 'mictlan';
+  if(name.includes('tartarus'))return 'tartarus';
   return 'dungeon';
 }
 
@@ -404,6 +428,14 @@ const MONSTER_CHAR_ROW = {
   doppelganger: 9, mimic: 33, shoggoth: 33,
   gibbering_mouther: 33, aboleth: 29, ammit: 28,
   jiangshi: 26, tengu: 38, kishi: 36, salthopper: 35,
+  // Duat branch
+  scarab_swarm: 35, mummy_warrior: 26, anubis_guard: 27, sand_golem: 28, sphinx: 36,
+  // Mictlan branch
+  obsidian_jaguar: 36, feathered_serpent: 32, tzitzimime: 30, bone_dancer: 22, blood_elemental: 42,
+  // Tartarus branch
+  shade: 41, fury: 38, titan: 28, cerberus: 36, styx_boatman: 41,
+  // Main dungeon mid-game
+  manticore: 36, phase_spider: 35, wyvern: 38, clay_golem: 28, dark_elf: 15,
 };
 
 // --- Boss → boss row mapping ---
@@ -415,6 +447,9 @@ const BOSS_ROW = {
   dragon_ancient: 0,      // dragon
   dragon_young: 0,        // dragon
   beholder: 1,
+  ammit_boss: 3,
+  mictlan_boss: 2,
+  tartarus_boss: 4,
 };
 
 // --- Player class → character row ---
@@ -422,6 +457,10 @@ const PLAYER_CHAR_ROW = {
   fightingman: 10, // warrior
   cleric: 7,       // cleric
   magicuser: 2,    // mage
+  thief: 9,
+  druid: 1,
+  ranger: 8,
+  warlock: 0,
 };
 
 // Race overrides for player sprite (used when race is visually distinct)
@@ -500,6 +539,7 @@ const TILE_MAP = {
     [TILE.ALTAR]:       108,
     [TILE.SHOP]:        230,
     [TILE.TRAP]:        246,
+    [TILE.PORTAL]:      230,
   },
   player: 160,
   companion: 161,

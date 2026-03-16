@@ -3645,6 +3645,17 @@ function confirmFire() {
   ammo.count--;
   if(ammo.count <= 0) { p.equipped.ammo = null; }
 
+  // Animate projectile
+  const isStone = weapon.ammo === 'stones';
+  if(typeof animateProjectile === 'function') {
+    animateProjectile(p.x, p.y, target.x, target.y, isStone, () => resolveRangedHit(p, weapon, target, ammo));
+    if(typeof SFX !== 'undefined') SFX.shoot();
+    return;
+  }
+  resolveRangedHit(p, weapon, target, ammo);
+}
+
+function resolveRangedHit(p, weapon, target, ammo) {
   const calledShotBonus = p.status.called_shot ? 4 : 0;
   const atkBonus = getAttackBonus(p) + (p.cls === 'fightingman' ? Math.floor(p.stats.dex/4) : 0) + calledShotBonus;
   const roll = rng.dice(1, 20, atkBonus);

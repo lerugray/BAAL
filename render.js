@@ -58,6 +58,60 @@ const SFX = {
   paper:        () => playSound('interface/paper.wav'),
 };
 
+// ─── PROJECTILE ANIMATION ───────────────────────────────────
+// FX sheet arrow tile IDs (8 cols, row 8)
+const ARROW_TILES = { x:64, xxy:65, xy:66, xyy:67, y:68 };
+const PEBBLE_TILE = 69;
+
+function getArrowTile(dx, dy) {
+  const ax = Math.abs(dx), ay = Math.abs(dy);
+  if(ay === 0) return ARROW_TILES.x;
+  if(ax === 0) return ARROW_TILES.y;
+  const ratio = ax / ay;
+  if(ratio > 2) return ARROW_TILES.x;
+  if(ratio > 1.2) return ARROW_TILES.xxy;
+  if(ratio > 0.8) return ARROW_TILES.xy;
+  if(ratio > 0.4) return ARROW_TILES.xyy;
+  return ARROW_TILES.y;
+}
+
+function animateProjectile(sx, sy, tx, ty, isStone, callback) {
+  if(!canvas || !ctx || !SHEETS.fx.ready) { if(callback) callback(); return; }
+  const steps = Math.max(Math.abs(tx-sx), Math.abs(ty-sy));
+  const totalFrames = Math.min(steps * 2, 12);
+  const dx = tx - sx, dy = ty - sy;
+  const tileId = isStone ? PEBBLE_TILE : getArrowTile(dx, dy);
+  let frame = 0;
+
+  function drawFrame() {
+    const t = frame / totalFrames;
+    const cx = sx + dx * t;
+    const cy = sy + dy * t;
+    renderAll();
+    // Draw projectile on top
+    const { ox, oy } = getViewOffset();
+    const px = (cx - ox) * CELL_SIZE;
+    const py = (cy - oy) * CELL_SIZE;
+    const sheet = SHEETS.fx;
+    const sprX = (tileId % sheet.cols) * sheet.tileSize;
+    const sprY = Math.floor(tileId / sheet.cols) * sheet.tileSize;
+    // Flip/rotate based on direction
+    ctx.save();
+    ctx.translate(px + CELL_SIZE/2, py + CELL_SIZE/2);
+    if(dx < 0) ctx.scale(-1, 1);
+    if(dy < 0 && Math.abs(dx) < Math.abs(dy)) ctx.scale(1, -1);
+    ctx.drawImage(sheet.img, sprX, sprY, sheet.tileSize, sheet.tileSize, -CELL_SIZE/2, -CELL_SIZE/2, CELL_SIZE, CELL_SIZE);
+    ctx.restore();
+    frame++;
+    if(frame <= totalFrames) {
+      requestAnimationFrame(drawFrame);
+    } else {
+      if(callback) callback();
+    }
+  }
+  drawFrame();
+}
+
 // ─── ANIMATION LOOP ──────────────────────────────────────────
 let animFrameId = null;
 let lastRenderTime = 0;

@@ -1247,6 +1247,7 @@ function updateLogPanel() {
   const el = document.getElementById('log-panel');
   const recent = G.messages.slice(-8);
   el.innerHTML = recent.map(m => `<div class="log-msg log-${m.type}">${m.text}</div>`).join('');
+  el.scrollTop = el.scrollHeight;
 }
 
 // ─── LOGGING ─────────────────────────────────────────────────

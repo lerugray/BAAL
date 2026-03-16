@@ -60,8 +60,8 @@ const SFX = {
 
 // ─── PROJECTILE ANIMATION ───────────────────────────────────
 // FX sheet arrow tile IDs (8 cols, row 8)
-const ARROW_TILES = { x:64, xxy:65, xy:66, xyy:67, y:68 };
-const PEBBLE_TILE = 69;
+const ARROW_TILES = { x:56, xxy:57, xy:58, xyy:59, y:60 };
+const PEBBLE_TILE = 61;
 
 function getArrowTile(dx, dy) {
   const ax = Math.abs(dx), ay = Math.abs(dy);

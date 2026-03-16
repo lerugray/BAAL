@@ -944,6 +944,27 @@ function renderAll() {
   const floorLabel = G.ascending ? `Floor ${G.floor} of 16 ▲ ASCENDING` : `Floor ${G.floor} of 16`;
   document.getElementById('map-info').textContent = `${floorLabel}  |  Turn ${G.turn}`;
 
+  // Draw targeting/look cursor overlay
+  if((G.lookMode || G.stairFindMode || G.targetMode) && G.lookX !== undefined) {
+    if(typeof overlayLookBox === 'function') overlayLookBox();
+    // Draw targeting line for ranged
+    if(G.targetMode && ctx) {
+      const { ox, oy } = getViewOffset();
+      const px = (G.player.x - ox) * CELL_SIZE + CELL_SIZE/2;
+      const py = (G.player.y - oy) * CELL_SIZE + CELL_SIZE/2;
+      const tx = (G.lookX - ox) * CELL_SIZE + CELL_SIZE/2;
+      const ty = (G.lookY - oy) * CELL_SIZE + CELL_SIZE/2;
+      ctx.strokeStyle = 'rgba(255,100,50,0.6)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4,4]);
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(tx, ty);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
   updateSidePanel();
   updateLogPanel();
 }

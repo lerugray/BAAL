@@ -1251,6 +1251,7 @@ function updateLogPanel() {
 
 // ─── LOGGING ─────────────────────────────────────────────────
 function log(text, type='info') {
+  if(!G || !G.messages) { if(!G) G = {}; if(!G.messages) G.messages = []; }
   G.messages.push({ text, type });
   if(G.messages.length > 500) G.messages.shift();
 }

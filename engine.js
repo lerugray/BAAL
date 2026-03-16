@@ -472,7 +472,7 @@ function levelUp(player) {
   player.level++;
   const cls = CLASSES[player.cls];
   const hpGain = rng.dice(1, cls.hpDice, Math.floor((player.stats.con-10)/2));
-  const mpGain = cls.mpPerLevel + Math.floor((player.stats.int-10)/2) + Math.floor((player.stats.wis-10)/2);
+  const mpGain = Math.max(0, cls.mpPerLevel + Math.floor((player.stats[cls.primeStat === 'int' ? 'int' : cls.primeStat === 'wis' ? 'wis' : 'cha'] - 10) / 3));
   
   player.maxHp += hpGain;
   player.hp = Math.min(player.hp + hpGain, player.maxHp);

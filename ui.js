@@ -113,24 +113,47 @@ function openInventory() {
     listEl.innerHTML = '<p style="color:var(--gray);font-size:14px;padding:10px;">Inventory empty.</p>';
     return;
   }
-  
-  p.inventory.forEach((item, i) => {
-    const key = String.fromCharCode(97 + i);
-    const isEquipped = Object.values(p.equipped).includes(item);
-    const div = document.createElement('div');
-    div.className = 'inv-item';
-    const dispName = getItemDisplayName(item);
-    const showCursed = item.cursed && item.identified;
-    const itemGlyph = useTileset ? spriteHTML(typeof getItemWorldTile === 'function' ? (getItemWorldTile(item) || getItemTile(item)) : 231, typeof getItemWorldTile === 'function' && getItemWorldTile(item) !== undefined ? 'world' : 'classic', 18) : `<span style="color:${item.color||'var(--white)'}">${item.glyph||'?'}</span>`;
-    const countStr = item.count ? ` (${item.count})` : '';
-    div.innerHTML = `
-      <span class="item-key">${key})</span>
-      ${itemGlyph}
-      <span class="item-name ${isEquipped?'equipped':''} ${showCursed?'item-cursed':''}">${dispName}${countStr}${isEquipped?' (worn)':''}${showCursed?' ✗':''}</span>
-    `;
-    div.onclick = () => showItemDetail(item, i);
-    listEl.appendChild(div);
-  });
+
+  // Group by category like DCSS
+  const categories = [
+    { label: 'Weapons', types: ['weapon'], filter: i => i.type === 'weapon' && !i.ranged },
+    { label: 'Ranged', types: [], filter: i => (i.type === 'weapon' && i.ranged) || i.type === 'wand' },
+    { label: 'Armour', types: ['armor'], filter: i => i.type === 'armor' },
+    { label: 'Ammunition', types: ['ammo','thrown'], filter: i => i.type === 'ammo' || i.type === 'thrown' },
+    { label: 'Potions', types: ['potion'], filter: i => i.type === 'potion' },
+    { label: 'Scrolls', types: ['scroll'], filter: i => i.type === 'scroll' },
+    { label: 'Jewellery', types: ['ring','amulet'], filter: i => i.type === 'ring' || i.type === 'amulet' },
+    { label: 'Food', types: ['food'], filter: i => i.type === 'food' },
+    { label: 'Other', types: [], filter: i => !['weapon','armor','ammo','thrown','potion','scroll','ring','amulet','food','wand'].includes(i.type) },
+  ];
+
+  for(const cat of categories) {
+    const items = p.inventory.filter(cat.filter);
+    if(items.length === 0) continue;
+    const header = document.createElement('div');
+    header.style.cssText = 'color:var(--cyan);font-size:13px;padding:4px 8px 2px;border-bottom:1px solid var(--border);margin-top:6px;';
+    header.textContent = cat.label;
+    listEl.appendChild(header);
+
+    for(const item of items) {
+      const i = p.inventory.indexOf(item);
+      const key = String.fromCharCode(97 + i);
+      const isEquipped = Object.values(p.equipped).includes(item);
+      const div = document.createElement('div');
+      div.className = 'inv-item';
+      const dispName = getItemDisplayName(item);
+      const showCursed = item.cursed && item.identified;
+      const itemGlyph = useTileset ? spriteHTML(typeof getItemWorldTile === 'function' ? (getItemWorldTile(item) || getItemTile(item)) : 231, typeof getItemWorldTile === 'function' && getItemWorldTile(item) !== undefined ? 'world' : 'classic', 18) : `<span style="color:${item.color||'var(--white)'}">${item.glyph||'?'}</span>`;
+      const countStr = item.count ? ` (${item.count})` : '';
+      div.innerHTML = `
+        <span class="item-key">${key})</span>
+        ${itemGlyph}
+        <span class="item-name ${isEquipped?'equipped':''} ${showCursed?'item-cursed':''}">${dispName}${countStr}${isEquipped?' (worn)':''}${showCursed?' ✗':''}</span>
+      `;
+      div.onclick = () => showItemDetail(item, i);
+      listEl.appendChild(div);
+    }
+  }
 
   renderInlineSprites(document.getElementById('inv-list'));
   G.invOpen = true;
@@ -852,7 +875,19 @@ function handleKey(e) {
     return;
   }
   if(G.identifyMenuOpen) {
-    if(e.key === 'Escape') closeIdentifyMenu();
+    if(e.key === 'Escape') { closeIdentifyMenu(); return; }
+    const sc = e.key.charCodeAt(0);
+    if(sc >= 97 && sc <= 122) {
+      const idx = sc - 97;
+      const unidentified = G.player.inventory.filter(i => !i.identified && (i.type === 'potion' || i.type === 'scroll' || i.type === 'ring' || i.type === 'amulet' || i.type === 'wand'));
+      if(unidentified[idx]) {
+        const realIdx = G.player.inventory.indexOf(unidentified[idx]);
+        closeIdentifyMenu();
+        identifyItem(G.player.inventory[realIdx]);
+        log(`You identify the ${G.player.inventory[realIdx].name}.`, 'good');
+        endTurn();
+      }
+    }
     return;
   }
   if(G.pickupModalOpen) {

@@ -997,9 +997,10 @@ function updateSidePanel() {
   const godEl = document.getElementById('god-display');
   if(p.god) {
     const godData = GODS[p.god];
+    const pietyDisp = Math.floor(p.piety);
     godEl.innerHTML = `<div class="god-name" style="font-size:13px;">${godData.name}</div>
-      <div style="font-size:10px;color:var(--gray)">Piety ${p.piety}/100</div>
-      <div style="height:6px;background:#111;border:1px solid var(--border);border-radius:1px;margin-top:2px;"><div class="piety-bar" style="width:${p.piety}%"></div></div>`;
+      <div style="font-size:10px;color:var(--gray)">Piety ${pietyDisp}/100</div>
+      <div style="height:6px;background:#111;border:1px solid var(--border);border-radius:1px;margin-top:2px;"><div class="piety-bar" style="width:${pietyDisp}%"></div></div>`;
   } else {
     godEl.innerHTML = `<span style="color:var(--gray);font-size:10px;">No god</span>`;
   }
@@ -1244,7 +1245,7 @@ function renderMinimap() {
 
 function updateLogPanel() {
   const el = document.getElementById('log-panel');
-  const recent = G.messages.slice(-6);
+  const recent = G.messages.slice(-8);
   el.innerHTML = recent.map(m => `<div class="log-msg log-${m.type}">${m.text}</div>`).join('');
 }
 

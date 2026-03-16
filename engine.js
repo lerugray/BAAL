@@ -2105,8 +2105,8 @@ function endTurn() {
   // Natural HP + MP regen when no enemies visible
   const inCombat = G.level?.monsters.some(m => G.level.visible?.has(`${m.x},${m.y}`));
   if(!inCombat) {
-    if(G.turn % 5 === 0 && p.hp < p.maxHp) p.hp = Math.min(p.maxHp, p.hp + 1);
-    if(G.turn % 12 === 0 && p.mp < p.maxMp) p.mp = Math.min(p.maxMp, p.mp + 1);
+    if(G.turn % 15 === 0 && p.hp < p.maxHp) p.hp = Math.min(p.maxHp, p.hp + 1);
+    if(G.turn % 20 === 0 && p.mp < p.maxMp) p.mp = Math.min(p.maxMp, p.mp + 1);
   }
 
   // Regeneration (ring)
@@ -2115,15 +2115,15 @@ function endTurn() {
   }
 
   // Druid regen spell
-  if(p.status.regen_spell > 0 && G.turn % 1 === 0) {
-    p.hp = Math.min(p.maxHp, p.hp + 2);
-  }
-  if(p.passives.includes('regeneration') && G.turn % 8 === 0) {
+  if(p.status.regen_spell > 0 && G.turn % 5 === 0) {
     p.hp = Math.min(p.maxHp, p.hp + 1);
   }
-  
+  if(p.passives.includes('regeneration') && G.turn % 12 === 0) {
+    p.hp = Math.min(p.maxHp, p.hp + 1);
+  }
+
   // Class-based MP regen (always, in/out of combat)
-  const mpRate = p.cls === 'magicuser' ? 5 : p.cls === 'cleric' ? 7 : 0;
+  const mpRate = p.cls === 'magicuser' ? 8 : p.cls === 'cleric' ? 10 : 0;
   if(mpRate > 0 && G.turn % mpRate === 0 && p.mp < p.maxMp) {
     p.mp = Math.min(p.maxMp, p.mp + 1);
   }
